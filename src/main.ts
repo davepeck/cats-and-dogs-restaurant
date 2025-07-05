@@ -1,24 +1,20 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import "./style.css";
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
+// Create the game canvas
+document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
+    <h1>Catstaurant</h1>
+    <canvas id="gameCanvas" width="1024" height="1024"></canvas>
   </div>
-`
+`;
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+// Initialize the game
+const canvas = document.querySelector<HTMLCanvasElement>("#gameCanvas")!;
+const ctx = canvas.getContext("2d")!;
+
+// Load and draw the background image
+const backgroundImage = new Image();
+backgroundImage.onload = () => {
+  ctx.drawImage(backgroundImage, 0, 0, 1024, 1024);
+};
+backgroundImage.src = "/img/background.png";
