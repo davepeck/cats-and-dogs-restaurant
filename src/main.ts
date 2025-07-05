@@ -44,6 +44,8 @@ const images = {
   girlLeft: new Image(),
   girlRight: new Image(),
   table: new Image(),
+  cat1: new Image(),
+  cat3: new Image(), // I'll use cat1 and cat3 as they look good together
 };
 
 // Store processed transparent versions of character images
@@ -52,10 +54,12 @@ const transparentImages = {
   girlLeft: null as HTMLCanvasElement | null,
   girlRight: null as HTMLCanvasElement | null,
   table: null as HTMLCanvasElement | null,
+  cat1: null as HTMLCanvasElement | null,
+  cat3: null as HTMLCanvasElement | null,
 };
 
 let imagesLoaded = 0;
-const totalImages = 5;
+const totalImages = 7;
 
 // Function to make white/near-white pixels transparent
 function makeWhiteTransparent(image: HTMLImageElement): HTMLCanvasElement {
@@ -99,6 +103,8 @@ function onImageLoad() {
     transparentImages.girlLeft = makeWhiteTransparent(images.girlLeft);
     transparentImages.girlRight = makeWhiteTransparent(images.girlRight);
     transparentImages.table = makeWhiteTransparent(images.table);
+    transparentImages.cat1 = makeWhiteTransparent(images.cat1);
+    transparentImages.cat3 = makeWhiteTransparent(images.cat3);
 
     // All images loaded and processed, start the game loop
     gameLoop();
@@ -120,6 +126,12 @@ images.girlRight.src = "/img/girl-right.png";
 
 images.table.onload = onImageLoad;
 images.table.src = "/img/table.png";
+
+images.cat1.onload = onImageLoad;
+images.cat1.src = "/img/cat1.png";
+
+images.cat3.onload = onImageLoad;
+images.cat3.src = "/img/cat3.png";
 
 // Keyboard input handling
 const keys = {
@@ -184,8 +196,46 @@ function render() {
   // Draw background
   ctx.drawImage(images.background, 0, 0, 1024, 1024);
 
+  // Draw cat customers BEHIND the table (so table will overlap them)
+  if (transparentImages.cat1 && transparentImages.cat3) {
+    const tableStartX = Math.floor(1024 * (1 / 3));
+    const tableY = 600;
+    const catScale = 0.5; // Scale cats down to appropriate size
+    
+    // Position cats along the table length
+    const cat1X = tableStartX + 150; // First cat position
+    const cat3X = tableStartX + 400; // Second cat position  
+    const catY = tableY - 20; // Position them slightly behind/above table level
+    
+    ctx.imageSmoothingEnabled = false;
+    
+    // Draw first cat (cat1)
+    const cat1Width = transparentImages.cat1.width * catScale;
+    const cat1Height = transparentImages.cat1.height * catScale;
+    ctx.drawImage(
+      transparentImages.cat1,
+      cat1X - cat1Width / 2,
+      catY - cat1Height / 2,
+      cat1Width,
+      cat1Height
+    );
+    
+    // Draw second cat (cat3)
+    const cat3Width = transparentImages.cat3.width * catScale;
+    const cat3Height = transparentImages.cat3.height * catScale;
+    ctx.drawImage(
+      transparentImages.cat3,
+      cat3X - cat3Width / 2,
+      catY - cat3Height / 2,
+      cat3Width,
+      cat3Height
+    );
+    
+    ctx.imageSmoothingEnabled = true;
+  }
+
   // Draw table extending from right edge to about 2/3 across the canvas
-  // Table should be tiled horizontally
+  // Table should be tiled horizontally (drawn AFTER cats so it appears in front)
   if (transparentImages.table) {
     const tableStartX = Math.floor(1024 * (1 / 3)); // Start at 1/3 from left (2/3 coverage)
     const tableY = 600; // Position vertically
