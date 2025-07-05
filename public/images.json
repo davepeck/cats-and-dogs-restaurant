@@ -1,91 +1,115 @@
 [
   {
+    "file": "/img/background.png",
+    "description": "Primary background image for the game",
+    "width": 1024,
+    "height": 1024
+  },
+  {
     "file": "/img/girl-left.png",
+    "description": "Girl character (primary user character) facing left",
     "width": 259,
     "height": 408
   },
   {
     "file": "/img/shrimp-icon.png",
+    "description": "An icon representing shrimp sushi, for speech bubbles",
     "width": 339,
     "height": 317
   },
   {
     "file": "/img/salmon-icon.png",
+    "description": "An icon representing salmon sushi, for speech bubbles",
     "width": 347,
     "height": 242
   },
   {
     "file": "/img/cat1.png",
+    "description": "Cat customer character #1, facing forward",
     "width": 173,
     "height": 249
   },
   {
     "file": "/img/shrimp-plate.png",
+    "description": "A plate of shrimp sushi",
     "width": 314,
     "height": 242
   },
   {
     "file": "/img/cat2.png",
+    "description": "Cat customer character #2, facing forward",
     "width": 183,
     "height": 249
   },
   {
     "file": "/img/cat3.png",
+    "description": "Cat customer character #3, facing forward",
     "width": 201,
     "height": 250
   },
   {
     "file": "/img/mango-cake-icon.png",
+    "description": "An icon representing mango cake, for speech bubbles",
     "width": 324,
     "height": 264
   },
   {
     "file": "/img/milk-mug.png",
+    "description": "A mug of milk",
     "width": 316,
     "height": 317
   },
   {
     "file": "/img/mango-cake-plate.png",
+    "description": "A plate of mango cake",
     "width": 348,
     "height": 274
   },
   {
     "file": "/img/cat4.png",
+    "description": "Cat customer character #4, facing forward",
     "width": 197,
     "height": 250
   },
   {
     "file": "/img/cat5.png",
+    "description": "Cat customer character #5, facing forward",
     "width": 165,
     "height": 250
   },
   {
     "file": "/img/girl-right.png",
+    "description": "Girl character (primary user character) facing right",
     "width": 256,
     "height": 407
   },
   {
     "file": "/img/girl-forward.png",
+    "description": "Girl character (primary user character) facing forward",
     "width": 299,
     "height": 402
   },
   {
     "file": "/img/speech-bubble.png",
+    "description": "A speech bubble for dialogue",
     "width": 363,
     "height": 296
   },
   {
     "file": "/img/milk-icon.png",
+    "description": "An icon representing a mug of milk, for speech bubbles",
     "width": 357,
     "height": 308
   },
   {
     "file": "/img/salmon-plate.png",
+    "description": "A plate of salmon sushi",
     "width": 347,
     "height": 240
   },
   {
     "file": "/img/table.png",
+    "description": "A table for serving food; can be extended horizontally",
     "width": 747,
     "height": 402
   }
