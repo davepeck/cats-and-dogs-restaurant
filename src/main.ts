@@ -27,8 +27,8 @@ interface GameState {
 
 const gameState: GameState = {
   player: {
-    x: 400, // Start near center
-    y: 500, // Position on screen
+    x: 200, // Start in the server area (left side)
+    y: 700, // Position lower on screen, near table level
     direction: "forward",
   },
   keys: {
@@ -43,6 +43,7 @@ const images = {
   girlForward: new Image(),
   girlLeft: new Image(),
   girlRight: new Image(),
+  table: new Image(),
 };
 
 // Store processed transparent versions of character images
@@ -50,10 +51,11 @@ const transparentImages = {
   girlForward: null as HTMLCanvasElement | null,
   girlLeft: null as HTMLCanvasElement | null,
   girlRight: null as HTMLCanvasElement | null,
+  table: null as HTMLCanvasElement | null,
 };
 
 let imagesLoaded = 0;
-const totalImages = 4;
+const totalImages = 5;
 
 // Function to make white/near-white pixels transparent
 function makeWhiteTransparent(image: HTMLImageElement): HTMLCanvasElement {
@@ -96,6 +98,7 @@ function onImageLoad() {
     transparentImages.girlForward = makeWhiteTransparent(images.girlForward);
     transparentImages.girlLeft = makeWhiteTransparent(images.girlLeft);
     transparentImages.girlRight = makeWhiteTransparent(images.girlRight);
+    transparentImages.table = makeWhiteTransparent(images.table);
 
     // All images loaded and processed, start the game loop
     gameLoop();
@@ -114,6 +117,9 @@ images.girlLeft.src = "/img/girl-left.png";
 
 images.girlRight.onload = onImageLoad;
 images.girlRight.src = "/img/girl-right.png";
+
+images.table.onload = onImageLoad;
+images.table.src = "/img/table.png";
 
 // Keyboard input handling
 const keys = {
@@ -161,11 +167,13 @@ function update() {
     gameState.player.direction = "forward";
   }
 
-  // Keep player within bounds (with some margin for character width)
-  const margin = 150; // Approximate half-width of character
+  // Keep player within bounds (adjusted for smaller character and table layout)
+  // Left side: more room for server area, right side: stop before table
+  const leftMargin = 60; // Smaller margin since character is smaller
+  const rightMargin = Math.floor(1024 * (1 / 3)) - 30; // Stop before table starts with small buffer
   gameState.player.x = Math.max(
-    margin,
-    Math.min(1024 - margin, gameState.player.x)
+    leftMargin,
+    Math.min(rightMargin, gameState.player.x)
   );
 }
 
@@ -176,7 +184,50 @@ function render() {
   // Draw background
   ctx.drawImage(images.background, 0, 0, 1024, 1024);
 
-  // Draw player character with transparent background
+  // Draw table extending from right edge to about 2/3 across the canvas
+  // Table should be tiled horizontally
+  if (transparentImages.table) {
+    const tableStartX = Math.floor(1024 * (1 / 3)); // Start at 1/3 from left (2/3 coverage)
+    const tableY = 600; // Position vertically
+    const tableWidth = images.table.naturalWidth;
+    const tableHeight = images.table.naturalHeight;
+
+    // Scale the table down to a reasonable size while maintaining pixelation
+    const tableScale = 0.45; // Reduced by 25% from 0.6
+    const scaledTableWidth = tableWidth * tableScale;
+    const scaledTableHeight = tableHeight * tableScale;
+
+    // Tile the table horizontally from tableStartX to the right edge
+    const tableEndX = 1024;
+    let currentX = tableStartX;
+
+    // Use nearest-neighbor scaling to maintain pixelated look
+    ctx.imageSmoothingEnabled = false;
+
+    while (currentX < tableEndX) {
+      const remainingWidth = tableEndX - currentX;
+      const drawWidth = Math.min(scaledTableWidth, remainingWidth);
+
+      ctx.drawImage(
+        transparentImages.table,
+        0,
+        0, // Source position
+        drawWidth / tableScale,
+        tableHeight, // Source size (adjust for partial tiles)
+        currentX,
+        tableY, // Destination position
+        drawWidth,
+        scaledTableHeight // Destination size
+      );
+
+      currentX += scaledTableWidth;
+    }
+
+    // Re-enable smoothing for other elements if needed
+    ctx.imageSmoothingEnabled = true;
+  }
+
+  // Draw player character with transparent background (scaled down)
   let playerImage;
   switch (gameState.player.direction) {
     case "left":
@@ -190,13 +241,23 @@ function render() {
   }
 
   if (playerImage) {
-    // Center the character image on the player position
-    const charWidth = playerImage.width;
-    const charHeight = playerImage.height;
+    // Scale the character down to sprite size while maintaining pixelation
+    const characterScale = 0.4; // Make her much smaller and more sprite-like
+    const scaledWidth = playerImage.width * characterScale;
+    const scaledHeight = playerImage.height * characterScale;
+
+    // Use nearest-neighbor scaling to maintain pixelated look
+    ctx.imageSmoothingEnabled = false;
+
     ctx.drawImage(
       playerImage,
-      gameState.player.x - charWidth / 2,
-      gameState.player.y - charHeight / 2
+      gameState.player.x - scaledWidth / 2,
+      gameState.player.y - scaledHeight / 2,
+      scaledWidth,
+      scaledHeight
     );
+
+    // Re-enable smoothing
+    ctx.imageSmoothingEnabled = true;
   }
 }
