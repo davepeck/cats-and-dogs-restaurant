@@ -46,6 +46,8 @@ const images = {
   table: new Image(),
   cat1: new Image(),
   cat3: new Image(), // I'll use cat1 and cat3 as they look good together
+  speechBubble: new Image(),
+  mangoCakeIcon: new Image(),
 };
 
 // Store processed transparent versions of character images
@@ -56,10 +58,12 @@ const transparentImages = {
   table: null as HTMLCanvasElement | null,
   cat1: null as HTMLCanvasElement | null,
   cat3: null as HTMLCanvasElement | null,
+  speechBubble: null as HTMLCanvasElement | null,
+  mangoCakeIcon: null as HTMLCanvasElement | null,
 };
 
 let imagesLoaded = 0;
-const totalImages = 7;
+const totalImages = 9;
 
 // Function to make white/near-white pixels transparent
 function makeWhiteTransparent(image: HTMLImageElement): HTMLCanvasElement {
@@ -105,6 +109,10 @@ function onImageLoad() {
     transparentImages.table = makeWhiteTransparent(images.table);
     transparentImages.cat1 = makeWhiteTransparent(images.cat1);
     transparentImages.cat3 = makeWhiteTransparent(images.cat3);
+    transparentImages.speechBubble = makeWhiteTransparent(images.speechBubble);
+    transparentImages.mangoCakeIcon = makeWhiteTransparent(
+      images.mangoCakeIcon
+    );
 
     // All images loaded and processed, start the game loop
     gameLoop();
@@ -132,6 +140,12 @@ images.cat1.src = "/img/cat1.png";
 
 images.cat3.onload = onImageLoad;
 images.cat3.src = "/img/cat3.png";
+
+images.speechBubble.onload = onImageLoad;
+images.speechBubble.src = "/img/speech-bubble-fixed.png";
+
+images.mangoCakeIcon.onload = onImageLoad;
+images.mangoCakeIcon.src = "/img/mango-cake-icon.png";
 
 // Keyboard input handling
 const keys = {
@@ -201,14 +215,14 @@ function render() {
     const tableStartX = Math.floor(1024 * (1 / 3));
     const tableY = 600;
     const catScale = 0.5; // Scale cats down to appropriate size
-    
+
     // Position cats along the table length
     const cat1X = tableStartX + 150; // First cat position
-    const cat3X = tableStartX + 400; // Second cat position  
+    const cat3X = tableStartX + 400; // Second cat position
     const catY = tableY - 20; // Position them slightly behind/above table level
-    
+
     ctx.imageSmoothingEnabled = false;
-    
+
     // Draw first cat (cat1)
     const cat1Width = transparentImages.cat1.width * catScale;
     const cat1Height = transparentImages.cat1.height * catScale;
@@ -219,7 +233,7 @@ function render() {
       cat1Width,
       cat1Height
     );
-    
+
     // Draw second cat (cat3)
     const cat3Width = transparentImages.cat3.width * catScale;
     const cat3Height = transparentImages.cat3.height * catScale;
@@ -230,7 +244,45 @@ function render() {
       cat3Width,
       cat3Height
     );
-    
+
+    // Draw speech bubble above cat1 with mango cake icon
+    if (transparentImages.speechBubble && transparentImages.mangoCakeIcon) {
+      const bubbleScale = 0.35; // Scale speech bubble down significantly
+      const bubbleWidth = transparentImages.speechBubble.width * bubbleScale;
+      const bubbleHeight = transparentImages.speechBubble.height * bubbleScale;
+
+      // Position bubble above cat1, accounting for the triangle being on bottom-left
+      // The triangle should point toward cat1's head
+      const bubbleX = cat1X + 20; // Offset slightly right so triangle points to cat
+      const bubbleY = catY - cat1Height / 2 - bubbleHeight / 2 - 20; // Above cat's head
+
+      // Draw the speech bubble
+      ctx.drawImage(
+        transparentImages.speechBubble,
+        bubbleX - bubbleWidth / 2,
+        bubbleY - bubbleHeight / 2,
+        bubbleWidth,
+        bubbleHeight
+      );
+
+      // Draw mango cake icon inside the speech bubble
+      const iconScale = 0.15; // Very small scale for the icon
+      const iconWidth = transparentImages.mangoCakeIcon.width * iconScale;
+      const iconHeight = transparentImages.mangoCakeIcon.height * iconScale;
+
+      // Center the icon in the bubble (slightly up from center)
+      const iconX = bubbleX;
+      const iconY = bubbleY - 10; // Slightly above center of bubble
+
+      ctx.drawImage(
+        transparentImages.mangoCakeIcon,
+        iconX - iconWidth / 2,
+        iconY - iconHeight / 2,
+        iconWidth,
+        iconHeight
+      );
+    }
+
     ctx.imageSmoothingEnabled = true;
   }
 
