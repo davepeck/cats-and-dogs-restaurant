@@ -1,17 +1,6 @@
-# Catstaurant - Game Specificati### Food Stations (Left Side of Screen)
+# Catstaurant - Game Specification
 
-Arranged vertically from top to bottom:
-
-1. **Salmon Station** (top) - Stack of 3 salmon plates
-2. **Shrimp Station** - Stack of 3 shrimp plates
-3. **Mango Cake Station** - Stack of 3 mango cake plates
-4. **Milk Station** (bottom) - Stack of 3 milk mugs
-
-**Visual Representation**: Each station displays a pile of 3 identical food items (plates/mugs) to indicate available food and create visual abundance.
-
-**Station Layout**: Equally spaced vertically on the left side of screen, with topmost station aligned with top edge of table graphic for convenience.
-
-**Capacity**: Unlimited food available at all stations.rview
+## Overview
 
 **Catstaurant** is a cat restaurant management game where you play as a girl server who must efficiently serve food to cat customers before their patience runs out.
 
@@ -88,7 +77,19 @@ Arranged vertically from top to bottom:
 ### Win/Lose Conditions
 
 - **Game Over**: Any cat's timer reaches zero before being served
-- **Scoring**: Successfully served cats (details TBD)
+- **No Scoring**: Game focuses on survival/time management rather than score accumulation
+
+### Game States
+
+**Two-State System:**
+1. **"Game Not Playing"**: Initial state and game over screen
+   - Displays game title and basic instructions
+   - Shows "Press SPACE to Start" message
+   - Activated when game first loads or when player loses
+2. **"Playing"**: Active gameplay state  
+   - All game mechanics active (movement, serving, timers)
+   - Transition to "Game Not Playing" when any cat's timer expires
+   - Press SPACE in "Game Not Playing" to return to this state
 
 ## Technical Implementation
 
@@ -159,8 +160,11 @@ Arranged vertically from top to bottom:
 
 ### UI/Scoring
 
-13. **Score Display**: Should we show current score, cats served, time played, etc.?
+13. ~~**Score Display**: Should we show current score, cats served, time played, etc.?~~  
+    **✅ RESOLVED**: No scoring system for now - keep it simple.
 
-14. **Game States**: Do you want a start screen, game over screen, or just jump straight into gameplay?
+14. ~~**Game States**: Do you want a start screen, game over screen, or just jump straight into gameplay?~~  
+    **✅ RESOLVED**: Two simple game states: "Game Not Playing" (also serves as game over screen) and "Playing". Press space bar in "Game Not Playing" state to start a new game.
 
-15. **Difficulty Progression**: Should difficulty increase over time, by score, or by number of cats served?
+15. ~~**Difficulty Progression**: Should difficulty increase over time, by score, or by number of cats served?~~  
+    **✅ RESOLVED**: Use the timer progression system already defined (reduce timer by 1 second per 3 cats served) - no additional complexity needed for now.
