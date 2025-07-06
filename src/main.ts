@@ -23,6 +23,7 @@ interface GameState {
     left: boolean;
     right: boolean;
   };
+  nearbyStation: number | null; // Index of the station the player is near, or null
 }
 
 const gameState: GameState = {
@@ -35,6 +36,7 @@ const gameState: GameState = {
     left: false,
     right: false,
   },
+  nearbyStation: null, // No station nearby initially
 };
 
 // Load images
@@ -254,6 +256,45 @@ function update() {
     topMargin,
     Math.min(bottomMargin, gameState.player.y)
   );
+
+  // Check proximity to food stations
+  const tableY = 600;
+  const stationX = 80;
+  const stationSpacing = 120;
+  const startY = tableY - 80 + 64;
+  const pickupAreaLeftBound = stationX - 40; // Allow standing on top of stations (left of center)
+  const pickupAreaRightBound = Math.floor(1024 * (1 / 3)) - 30; // Before table area
+
+  const stations = [
+    { x: stationX, y: startY },
+    { x: stationX, y: startY + stationSpacing },
+    { x: stationX, y: startY + stationSpacing * 2 },
+    { x: stationX, y: startY + stationSpacing * 3 },
+  ];
+
+  // Check if player is in the pickup area (including on top of stations)
+  gameState.nearbyStation = null;
+
+  if (
+    gameState.player.x >= pickupAreaLeftBound &&
+    gameState.player.x <= pickupAreaRightBound
+  ) {
+    // Use the girl's hand position (3/4 down the sprite) for more natural interaction
+    const characterScale = 0.4;
+    const handY =
+      gameState.player.y +
+      0.25 * (transparentImages.girlForward?.height || 0) * characterScale;
+
+    // Find which station the player's hands are aligned with
+    stations.forEach((station, index) => {
+      const stationTopY = station.y - 60; // Station area extends above and below center
+      const stationBottomY = station.y + 60;
+
+      if (handY >= stationTopY && handY <= stationBottomY) {
+        gameState.nearbyStation = index;
+      }
+    });
+  }
 }
 
 function render() {
@@ -291,9 +332,34 @@ function render() {
     ctx.imageSmoothingEnabled = false;
 
     // Draw each station with stacks of 3 plates/mugs in a triangular arrangement
-    stations.forEach((station) => {
+    stations.forEach((station, index) => {
       const foodWidth = station.food.width * stationScale;
       const foodHeight = station.food.height * stationScale;
+
+      // Draw glow effect if player is nearby this station (with smoothing enabled)
+      if (gameState.nearbyStation === index) {
+        ctx.imageSmoothingEnabled = true; // Enable smoothing for glow
+
+        const glowRadius = 120; // Much larger radius for high visibility
+        const glowGradient = ctx.createRadialGradient(
+          stationX,
+          station.y,
+          0,
+          stationX,
+          station.y,
+          glowRadius
+        );
+        glowGradient.addColorStop(0, "rgba(255, 255, 0, 0.8)"); // Very bright yellow glow
+        glowGradient.addColorStop(0.5, "rgba(255, 255, 0, 0.5)"); // Mid fade
+        glowGradient.addColorStop(1, "rgba(255, 255, 0, 0)"); // Fade to transparent
+
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(stationX, station.y, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.imageSmoothingEnabled = false; // Back to pixelated for food
+      }
 
       // Create a triangular stack pattern
       // Bottom plate (base of triangle)
