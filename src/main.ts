@@ -24,6 +24,10 @@ interface GameState {
     right: boolean;
   };
   nearbyStation: number | null; // Index of the station the player is near, or null
+  carriedItem: {
+    type: "salmon" | "shrimp" | "mangoCake" | "milk" | null;
+    image: HTMLCanvasElement | null;
+  };
 }
 
 const gameState: GameState = {
@@ -37,6 +41,10 @@ const gameState: GameState = {
     right: false,
   },
   nearbyStation: null, // No station nearby initially
+  carriedItem: {
+    type: null,
+    image: null,
+  },
 };
 
 // Load images
@@ -181,6 +189,7 @@ const keys = {
   ArrowRight: false,
   ArrowUp: false,
   ArrowDown: false,
+  Space: false,
 };
 
 document.addEventListener("keydown", (e) => {
@@ -188,7 +197,8 @@ document.addEventListener("keydown", (e) => {
     e.code === "ArrowLeft" ||
     e.code === "ArrowRight" ||
     e.code === "ArrowUp" ||
-    e.code === "ArrowDown"
+    e.code === "ArrowDown" ||
+    e.code === "Space"
   ) {
     e.preventDefault();
     keys[e.code as keyof typeof keys] = true;
@@ -200,7 +210,8 @@ document.addEventListener("keyup", (e) => {
     e.code === "ArrowLeft" ||
     e.code === "ArrowRight" ||
     e.code === "ArrowUp" ||
-    e.code === "ArrowDown"
+    e.code === "ArrowDown" ||
+    e.code === "Space"
   ) {
     e.preventDefault();
     keys[e.code as keyof typeof keys] = false;
@@ -294,6 +305,21 @@ function update() {
         gameState.nearbyStation = index;
       }
     });
+  }
+
+  // Handle pickup when spacebar is pressed - replace carried item with station item
+  if (keys.Space && gameState.nearbyStation !== null) {
+    const stationTypes = ["salmon", "shrimp", "mangoCake", "milk"] as const;
+    const stationImages = [
+      transparentImages.salmonPlate,
+      transparentImages.shrimpPlate,
+      transparentImages.mangoCakePlate,
+      transparentImages.milkMug,
+    ];
+
+    // Always pick up the item from the nearby station, replacing any carried item
+    gameState.carriedItem.type = stationTypes[gameState.nearbyStation];
+    gameState.carriedItem.image = stationImages[gameState.nearbyStation];
   }
 }
 
@@ -541,6 +567,30 @@ function render() {
       scaledWidth,
       scaledHeight
     );
+
+    // Draw carried item in player's hands if carrying something
+    if (gameState.carriedItem.type && gameState.carriedItem.image) {
+      const carriedScale = 0.15; // Smaller scale for carried items
+      const carriedWidth = gameState.carriedItem.image.width * carriedScale;
+      const carriedHeight = gameState.carriedItem.image.height * carriedScale;
+
+      // Position near the player's hands (3/4 down, slightly forward)
+      const handOffsetY = 0.25 * scaledHeight; // 3/4 down from center
+      const handOffsetX =
+        gameState.player.direction === "left"
+          ? -15
+          : gameState.player.direction === "right"
+          ? 15
+          : 0;
+
+      ctx.drawImage(
+        gameState.carriedItem.image,
+        gameState.player.x + handOffsetX - carriedWidth / 2,
+        gameState.player.y + handOffsetY - carriedHeight / 2,
+        carriedWidth,
+        carriedHeight
+      );
+    }
 
     // Re-enable smoothing
     ctx.imageSmoothingEnabled = true;
