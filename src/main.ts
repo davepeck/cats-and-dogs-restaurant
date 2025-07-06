@@ -48,6 +48,10 @@ const images = {
   cat3: new Image(), // I'll use cat1 and cat3 as they look good together
   speechBubble: new Image(),
   mangoCakeIcon: new Image(),
+  salmonPlate: new Image(),
+  shrimpPlate: new Image(),
+  mangoCakePlate: new Image(),
+  milkMug: new Image(),
 };
 
 // Store processed transparent versions of character images
@@ -60,10 +64,14 @@ const transparentImages = {
   cat3: null as HTMLCanvasElement | null,
   speechBubble: null as HTMLCanvasElement | null,
   mangoCakeIcon: null as HTMLCanvasElement | null,
+  salmonPlate: null as HTMLCanvasElement | null,
+  shrimpPlate: null as HTMLCanvasElement | null,
+  mangoCakePlate: null as HTMLCanvasElement | null,
+  milkMug: null as HTMLCanvasElement | null,
 };
 
 let imagesLoaded = 0;
-const totalImages = 9;
+const totalImages = 13;
 
 // Function to make white/near-white pixels transparent
 function makeWhiteTransparent(image: HTMLImageElement): HTMLCanvasElement {
@@ -113,6 +121,12 @@ function onImageLoad() {
     transparentImages.mangoCakeIcon = makeWhiteTransparent(
       images.mangoCakeIcon
     );
+    transparentImages.salmonPlate = makeWhiteTransparent(images.salmonPlate);
+    transparentImages.shrimpPlate = makeWhiteTransparent(images.shrimpPlate);
+    transparentImages.mangoCakePlate = makeWhiteTransparent(
+      images.mangoCakePlate
+    );
+    transparentImages.milkMug = makeWhiteTransparent(images.milkMug);
 
     // All images loaded and processed, start the game loop
     gameLoop();
@@ -147,21 +161,45 @@ images.speechBubble.src = "/img/speech-bubble-fixed.png";
 images.mangoCakeIcon.onload = onImageLoad;
 images.mangoCakeIcon.src = "/img/mango-cake-icon.png";
 
+images.salmonPlate.onload = onImageLoad;
+images.salmonPlate.src = "/img/salmon-plate.png";
+
+images.shrimpPlate.onload = onImageLoad;
+images.shrimpPlate.src = "/img/shrimp-plate.png";
+
+images.mangoCakePlate.onload = onImageLoad;
+images.mangoCakePlate.src = "/img/mango-cake-plate.png";
+
+images.milkMug.onload = onImageLoad;
+images.milkMug.src = "/img/milk-mug.png";
+
 // Keyboard input handling
 const keys = {
   ArrowLeft: false,
   ArrowRight: false,
+  ArrowUp: false,
+  ArrowDown: false,
 };
 
 document.addEventListener("keydown", (e) => {
-  if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+  if (
+    e.code === "ArrowLeft" ||
+    e.code === "ArrowRight" ||
+    e.code === "ArrowUp" ||
+    e.code === "ArrowDown"
+  ) {
     e.preventDefault();
     keys[e.code as keyof typeof keys] = true;
   }
 });
 
 document.addEventListener("keyup", (e) => {
-  if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+  if (
+    e.code === "ArrowLeft" ||
+    e.code === "ArrowRight" ||
+    e.code === "ArrowUp" ||
+    e.code === "ArrowDown"
+  ) {
     e.preventDefault();
     keys[e.code as keyof typeof keys] = false;
   }
@@ -182,7 +220,7 @@ function gameLoop() {
 function update() {
   const moveSpeed = 3;
 
-  // Handle movement and direction
+  // Handle horizontal movement and direction
   if (keys.ArrowLeft && !keys.ArrowRight) {
     gameState.player.x -= moveSpeed;
     gameState.player.direction = "left";
@@ -193,6 +231,13 @@ function update() {
     gameState.player.direction = "forward";
   }
 
+  // Handle vertical movement
+  if (keys.ArrowUp && !keys.ArrowDown) {
+    gameState.player.y -= moveSpeed;
+  } else if (keys.ArrowDown && !keys.ArrowUp) {
+    gameState.player.y += moveSpeed;
+  }
+
   // Keep player within bounds (adjusted for smaller character and table layout)
   // Left side: more room for server area, right side: stop before table
   const leftMargin = 60; // Smaller margin since character is smaller
@@ -200,6 +245,14 @@ function update() {
   gameState.player.x = Math.max(
     leftMargin,
     Math.min(rightMargin, gameState.player.x)
+  );
+
+  // Vertical bounds - keep player in reasonable area
+  const topMargin = 300; // Don't go too high above table
+  const bottomMargin = 900; // Don't go too low below table
+  gameState.player.y = Math.max(
+    topMargin,
+    Math.min(bottomMargin, gameState.player.y)
   );
 }
 
@@ -209,6 +262,70 @@ function render() {
 
   // Draw background
   ctx.drawImage(images.background, 0, 0, 1024, 1024);
+
+  // Draw food stations on the left side
+  if (
+    transparentImages.salmonPlate &&
+    transparentImages.shrimpPlate &&
+    transparentImages.mangoCakePlate &&
+    transparentImages.milkMug
+  ) {
+    const tableY = 600;
+    const stationX = 80; // X position for all stations (left side)
+    const stationScale = 0.25; // Scale down the food plates/mugs
+
+    // Define the 4 station positions (more spacing between stations)
+    const stationSpacing = 120; // Increased from 90 to 120
+    const startY = tableY - 80; // Align with top of table area
+
+    const stations = [
+      { food: transparentImages.salmonPlate, y: startY },
+      { food: transparentImages.shrimpPlate, y: startY + stationSpacing },
+      {
+        food: transparentImages.mangoCakePlate,
+        y: startY + stationSpacing * 2,
+      },
+      { food: transparentImages.milkMug, y: startY + stationSpacing * 3 },
+    ];
+
+    ctx.imageSmoothingEnabled = false;
+
+    // Draw each station with stacks of 3 plates/mugs in a triangular arrangement
+    stations.forEach((station) => {
+      const foodWidth = station.food.width * stationScale;
+      const foodHeight = station.food.height * stationScale;
+
+      // Create a triangular stack pattern
+      // Bottom plate (base of triangle)
+      ctx.drawImage(
+        station.food,
+        stationX - foodWidth / 2,
+        station.y - foodHeight / 2,
+        foodWidth,
+        foodHeight
+      );
+
+      // Left plate (left side of triangle)
+      ctx.drawImage(
+        station.food,
+        stationX - foodWidth / 2 - 12, // Move left
+        station.y - foodHeight / 2 - 8, // Move up
+        foodWidth,
+        foodHeight
+      );
+
+      // Right plate (right side of triangle)
+      ctx.drawImage(
+        station.food,
+        stationX - foodWidth / 2 + 12, // Move right
+        station.y - foodHeight / 2 - 8, // Move up
+        foodWidth,
+        foodHeight
+      );
+    });
+
+    ctx.imageSmoothingEnabled = true;
+  }
 
   // Draw cat customers BEHIND the table (so table will overlap them)
   if (transparentImages.cat1 && transparentImages.cat3) {
