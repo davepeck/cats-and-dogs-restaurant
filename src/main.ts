@@ -276,7 +276,7 @@ function render() {
 
     // Define the 4 station positions (more spacing between stations)
     const stationSpacing = 120; // Increased from 90 to 120
-    const startY = tableY - 80; // Align with top of table area
+    const startY = tableY - 80 + 64; // Move all stations down by 64 pixels
 
     const stations = [
       { food: transparentImages.salmonPlate, y: startY },
@@ -308,8 +308,8 @@ function render() {
       // Left plate (left side of triangle)
       ctx.drawImage(
         station.food,
-        stationX - foodWidth / 2 - 12, // Move left
-        station.y - foodHeight / 2 - 8, // Move up
+        stationX - foodWidth / 2 - 36, // Move left (increased to 36 pixels)
+        station.y - foodHeight / 2 - 24, // Move up (increased to 24 pixels)
         foodWidth,
         foodHeight
       );
@@ -317,8 +317,8 @@ function render() {
       // Right plate (right side of triangle)
       ctx.drawImage(
         station.food,
-        stationX - foodWidth / 2 + 12, // Move right
-        station.y - foodHeight / 2 - 8, // Move up
+        stationX - foodWidth / 2 + 36, // Move right (increased to 36 pixels)
+        station.y - foodHeight / 2 - 24, // Move up (increased to 24 pixels)
         foodWidth,
         foodHeight
       );
