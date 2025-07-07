@@ -82,11 +82,12 @@ Arranged vertically from top to bottom:
 ### Game States
 
 **Two-State System:**
+
 1. **"Game Not Playing"**: Initial state and game over screen
    - Displays game title and basic instructions
    - Shows "Press SPACE to Start" message
    - Activated when game first loads or when player loses
-2. **"Playing"**: Active gameplay state  
+2. **"Playing"**: Active gameplay state
    - All game mechanics active (movement, serving, timers)
    - Transition to "Game Not Playing" when any cat's timer expires
    - Press SPACE in "Game Not Playing" to return to this state
@@ -168,3 +169,13 @@ Arranged vertically from top to bottom:
 
 15. ~~**Difficulty Progression**: Should difficulty increase over time, by score, or by number of cats served?~~  
     **✅ RESOLVED**: Use the timer progression system already defined (reduce timer by 1 second per 3 cats served) - no additional complexity needed for now.
+
+### Notes
+
+Convert an image drawn by chatgpt that has a white border (white-ish -- the pixels vary a bit) to a transparent background, but do NOT convert interior white-ish pixels to transparent:
+
+```
+magick white.png -alpha set -bordercolor white -border 1x1 -fuzz 8% -fill transparent -draw "color 0,0 floodfill" -shave 1x1 transparent.png
+```
+
+Different `fuzz` leads to better/worse results for different images.

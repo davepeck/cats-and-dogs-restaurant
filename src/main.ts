@@ -23,8 +23,8 @@ interface Cat {
   timeRemaining: number; // In seconds
   maxTime: number; // Initial time for this cat
   state: "entering" | "seated" | "eating" | "leaving";
-  sprite: HTMLCanvasElement | null; // Which cat sprite to use
-  plateOnTable: HTMLCanvasElement | null; // The plate image shown on the table when served
+  sprite: HTMLImageElement | null; // Which cat sprite to use
+  plateOnTable: HTMLImageElement | null; // The plate image shown on the table when served
 }
 
 interface GameState {
@@ -41,7 +41,7 @@ interface GameState {
   nearbyCustomer: number | null; // Index of the customer the player is near, or null
   carriedItem: {
     type: "salmon" | "shrimp" | "mangoCake" | "milk" | null;
-    image: HTMLCanvasElement | null;
+    image: HTMLImageElement | null;
   } | null;
   cats: Cat[]; // Array of active cats
   gameState: "notStarted" | "playing" | "gameOver";
@@ -95,93 +95,13 @@ const images = {
   milkMug: new Image(),
 };
 
-// Store processed transparent versions of character images
-const transparentImages = {
-  girlForward: null as HTMLCanvasElement | null,
-  girlLeft: null as HTMLCanvasElement | null,
-  girlRight: null as HTMLCanvasElement | null,
-  table: null as HTMLCanvasElement | null,
-  cat1: null as HTMLCanvasElement | null,
-  cat2: null as HTMLCanvasElement | null,
-  cat3: null as HTMLCanvasElement | null,
-  cat4: null as HTMLCanvasElement | null,
-  cat5: null as HTMLCanvasElement | null,
-  speechBubble: null as HTMLCanvasElement | null,
-  mangoCakeIcon: null as HTMLCanvasElement | null,
-  salmonIcon: null as HTMLCanvasElement | null,
-  shrimpIcon: null as HTMLCanvasElement | null,
-  milkIcon: null as HTMLCanvasElement | null,
-  salmonPlate: null as HTMLCanvasElement | null,
-  shrimpPlate: null as HTMLCanvasElement | null,
-  mangoCakePlate: null as HTMLCanvasElement | null,
-  milkMug: null as HTMLCanvasElement | null,
-};
-
 let imagesLoaded = 0;
 const totalImages = 19;
-
-// Function to make white/near-white pixels transparent
-function makeWhiteTransparent(image: HTMLImageElement): HTMLCanvasElement {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d")!;
-
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
-
-  // Draw the original image
-  ctx.drawImage(image, 0, 0);
-
-  // Get image data
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-
-  // Process each pixel
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-
-    // Check if pixel is white or near-white
-    // We'll consider a pixel white if all RGB values are above 240
-    if (r > 240 && g > 240 && b > 240) {
-      data[i + 3] = 0; // Set alpha to 0 (transparent)
-    }
-  }
-
-  // Put the modified data back
-  ctx.putImageData(imageData, 0, 0);
-
-  return canvas;
-}
 
 function onImageLoad() {
   imagesLoaded++;
   if (imagesLoaded === totalImages) {
-    // Process character images to make white backgrounds transparent
-    transparentImages.girlForward = makeWhiteTransparent(images.girlForward);
-    transparentImages.girlLeft = makeWhiteTransparent(images.girlLeft);
-    transparentImages.girlRight = makeWhiteTransparent(images.girlRight);
-    transparentImages.table = makeWhiteTransparent(images.table);
-    transparentImages.cat1 = makeWhiteTransparent(images.cat1);
-    transparentImages.cat2 = makeWhiteTransparent(images.cat2);
-    transparentImages.cat3 = makeWhiteTransparent(images.cat3);
-    transparentImages.cat4 = makeWhiteTransparent(images.cat4);
-    transparentImages.cat5 = makeWhiteTransparent(images.cat5);
-    transparentImages.speechBubble = makeWhiteTransparent(images.speechBubble);
-    transparentImages.mangoCakeIcon = makeWhiteTransparent(
-      images.mangoCakeIcon
-    );
-    transparentImages.salmonIcon = makeWhiteTransparent(images.salmonIcon);
-    transparentImages.shrimpIcon = makeWhiteTransparent(images.shrimpIcon);
-    transparentImages.milkIcon = makeWhiteTransparent(images.milkIcon);
-    transparentImages.salmonPlate = makeWhiteTransparent(images.salmonPlate);
-    transparentImages.shrimpPlate = makeWhiteTransparent(images.shrimpPlate);
-    transparentImages.mangoCakePlate = makeWhiteTransparent(
-      images.mangoCakePlate
-    );
-    transparentImages.milkMug = makeWhiteTransparent(images.milkMug);
-
-    // All images loaded and processed, start the game loop
+    // All images loaded, start the game loop
     gameLoop();
   }
 }
@@ -236,7 +156,7 @@ images.salmonPlate.onload = onImageLoad;
 images.salmonPlate.src = "/img/salmon-plate.png";
 
 images.shrimpPlate.onload = onImageLoad;
-images.shrimpPlate.src = "/img/shrimp-plate.png";
+images.shrimpPlate.src = "/img/shrimp-icon.png";
 
 images.mangoCakePlate.onload = onImageLoad;
 images.mangoCakePlate.src = "/img/mango-cake-plate.png";
@@ -563,10 +483,10 @@ function update() {
   else if (keys.Space && gameState.nearbyStation !== null) {
     const stationTypes = ["salmon", "shrimp", "mangoCake", "milk"] as const;
     const stationImages = [
-      transparentImages.salmonPlate,
-      transparentImages.shrimpPlate,
-      transparentImages.mangoCakePlate,
-      transparentImages.milkMug,
+      images.salmonPlate,
+      images.shrimpPlate,
+      images.mangoCakePlate,
+      images.milkMug,
     ];
 
     // Always pick up the item from the nearby station, replacing any carried item
@@ -580,13 +500,13 @@ function update() {
 }
 
 // Cat management functions
-function getRandomCatSprite(): HTMLCanvasElement | null {
+function getRandomCatSprite(): HTMLImageElement | null {
   const catSprites = [
-    transparentImages.cat1,
-    transparentImages.cat2,
-    transparentImages.cat3,
-    transparentImages.cat4,
-    transparentImages.cat5,
+    images.cat1,
+    images.cat2,
+    images.cat3,
+    images.cat4,
+    images.cat5,
   ];
   const randomIndex = Math.floor(Math.random() * catSprites.length);
   return catSprites[randomIndex];
@@ -600,16 +520,16 @@ function getRandomOrder(): "salmon" | "shrimp" | "mangoCake" | "milk" {
 
 function getOrderIcon(
   order: "salmon" | "shrimp" | "mangoCake" | "milk"
-): HTMLCanvasElement | null {
+): HTMLImageElement | null {
   switch (order) {
     case "salmon":
-      return transparentImages.salmonIcon;
+      return images.salmonIcon;
     case "shrimp":
-      return transparentImages.shrimpIcon;
+      return images.shrimpIcon;
     case "mangoCake":
-      return transparentImages.mangoCakeIcon;
+      return images.mangoCakeIcon;
     case "milk":
-      return transparentImages.milkIcon;
+      return images.milkIcon;
     default:
       return null;
   }
@@ -672,10 +592,10 @@ const platePickupDropSound = new Audio("/sounds/plate-pickup-or-drop.wav");
 platePickupDropSound.volume = 1.0; // Adjust as needed
 
 const impatientMeowSound = new Audio("/sounds/impatient-meow.wav");
-impatientMeowSound.volume = 0.66; // Adjust as needed
+impatientMeowSound.volume = 0.25; // Adjust as needed
 
 const happyMeowSound = new Audio("/sounds/happy-meow.wav");
-happyMeowSound.volume = 0.33; // Adjust as needed
+happyMeowSound.volume = 0.25; // Adjust as needed
 
 const rejectedSound = new Audio("/sounds/rejected.wav");
 rejectedSound.volume = 0.5; // Adjust as needed
@@ -826,19 +746,19 @@ function render() {
     ctx.textAlign = "center";
     ctx.fillText("Game Over!", 512, 400);
 
-    ctx.font = "bold 32px Arial";
-    ctx.fillText(`Cats Served: ${gameState.catsServed}`, 512, 450);
+    ctx.font = "bold 48px Arial";
+    ctx.fillText(`Cats Served: ${gameState.catsServed}`, 512, 500);
     ctx.font = "bold 40px Arial";
-    ctx.fillText("Press SPACE to restart", 512, 500);
+    ctx.fillText("Press SPACE to restart", 512, 580);
     return;
   }
 
   // Draw food stations on the left side
   if (
-    transparentImages.salmonPlate &&
-    transparentImages.shrimpPlate &&
-    transparentImages.mangoCakePlate &&
-    transparentImages.milkMug
+    images.salmonPlate &&
+    images.shrimpPlate &&
+    images.mangoCakePlate &&
+    images.milkMug
   ) {
     const tableY = 600;
     const stationX = 80; // X position for all stations (left side)
@@ -849,13 +769,13 @@ function render() {
     const startY = tableY - 80 + 64; // Move all stations down by 64 pixels
 
     const stations = [
-      { food: transparentImages.salmonPlate, y: startY },
-      { food: transparentImages.shrimpPlate, y: startY + stationSpacing },
+      { food: images.salmonPlate, y: startY },
+      { food: images.shrimpPlate, y: startY + stationSpacing },
       {
-        food: transparentImages.mangoCakePlate,
+        food: images.mangoCakePlate,
         y: startY + stationSpacing * 2,
       },
-      { food: transparentImages.milkMug, y: startY + stationSpacing * 3 },
+      { food: images.milkMug, y: startY + stationSpacing * 3 },
     ];
 
     ctx.imageSmoothingEnabled = false;
@@ -967,13 +887,12 @@ function render() {
     );
 
     // Draw speech bubble and order icon for seated cats
-    if (cat.state === "seated" && transparentImages.speechBubble) {
+    if (cat.state === "seated" && images.speechBubble) {
       const orderIcon = getOrderIcon(cat.order);
       if (orderIcon) {
         const bubbleScale = 0.35;
-        const bubbleWidth = transparentImages.speechBubble.width * bubbleScale;
-        const bubbleHeight =
-          transparentImages.speechBubble.height * bubbleScale;
+        const bubbleWidth = images.speechBubble.width * bubbleScale;
+        const bubbleHeight = images.speechBubble.height * bubbleScale;
 
         // Position bubble above cat
         const bubbleX = cat.x + 20;
@@ -981,7 +900,7 @@ function render() {
 
         // Draw the speech bubble
         ctx.drawImage(
-          transparentImages.speechBubble,
+          images.speechBubble,
           bubbleX - bubbleWidth / 2,
           bubbleY - bubbleHeight / 2,
           bubbleWidth,
@@ -1031,7 +950,7 @@ function render() {
 
   // Draw table extending from right edge to about 2/3 across the canvas
   // Table should be tiled horizontally (drawn AFTER cats so it appears in front)
-  if (transparentImages.table) {
+  if (images.table) {
     const tableStartX = Math.floor(1024 * (1 / 3)); // Start at 1/3 from left (2/3 coverage)
     const tableY = 600; // Position vertically
     const tableWidth = images.table.naturalWidth;
@@ -1054,7 +973,7 @@ function render() {
       const drawWidth = Math.min(scaledTableWidth, remainingWidth);
 
       ctx.drawImage(
-        transparentImages.table,
+        images.table,
         0,
         0, // Source position
         drawWidth / tableScale,
@@ -1101,13 +1020,13 @@ function render() {
   let playerImage;
   switch (gameState.player.direction) {
     case "left":
-      playerImage = transparentImages.girlLeft;
+      playerImage = images.girlLeft;
       break;
     case "right":
-      playerImage = transparentImages.girlRight;
+      playerImage = images.girlRight;
       break;
     default:
-      playerImage = transparentImages.girlForward;
+      playerImage = images.girlForward;
   }
 
   if (playerImage) {
