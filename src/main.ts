@@ -654,6 +654,9 @@ doorbellSound.volume = 0.5; // Adjust as needed
 const platePickupDropSound = new Audio("/sounds/plate-pickup-or-drop.wav");
 platePickupDropSound.volume = 1.0; // Adjust as needed
 
+const impatientMeowSound = new Audio("/sounds/impatient-meow.wav");
+impatientMeowSound.volume = 0.75; // Adjust as needed
+
 function spawnCat(): void {
   const seat = findAvailableSeat();
   if (!seat) return; // No available seats
@@ -686,8 +689,8 @@ function spawnCat(): void {
     state: "entering",
     sprite: randomSprite,
     plateOnTable: null, // No plate on table initially
-  };
-
+    hasMeowed: false, // Track if impatient meow has played
+  } as Cat & { hasMeowed: boolean };
   gameState.cats.push(newCat);
 }
 
@@ -695,7 +698,7 @@ function updateCats(deltaTime: number): void {
   const catMoveSpeed = 2;
 
   for (let i = gameState.cats.length - 1; i >= 0; i--) {
-    const cat = gameState.cats[i];
+    const cat = gameState.cats[i] as Cat & { hasMeowed?: boolean };
 
     // Update cat movement based on state
     switch (cat.state) {
@@ -716,6 +719,14 @@ function updateCats(deltaTime: number): void {
       case "seated":
         // Cat is seated, countdown timer
         cat.timeRemaining -= deltaTime;
+
+        // Play impatient meow if timer drops below 25% and hasn't played yet
+        if (!cat.hasMeowed && cat.timeRemaining / cat.maxTime <= 0.25) {
+          impatientMeowSound.currentTime = 0;
+          impatientMeowSound.play().catch(() => {});
+          cat.hasMeowed = true;
+        }
+
         if (cat.timeRemaining <= 0) {
           // Game over - cat ran out of patience
           console.log(`Cat ${cat.id} ran out of patience! Game over.`);
