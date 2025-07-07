@@ -24,6 +24,7 @@ interface Cat {
   maxTime: number; // Initial time for this cat
   state: "entering" | "seated" | "eating" | "leaving";
   sprite: HTMLCanvasElement | null; // Which cat sprite to use
+  plateOnTable: HTMLCanvasElement | null; // The plate image shown on the table when served
 }
 
 interface GameState {
@@ -519,6 +520,7 @@ function update() {
       // Correct order served!
       targetCat.state = "eating";
       targetCat.timeRemaining = 2; // 2 seconds eating time
+      targetCat.plateOnTable = gameState.carriedItem.image; // Place plate on table
       gameState.carriedItem = null;
       gameState.catsServed++;
       console.log(
@@ -658,6 +660,7 @@ function spawnCat(): void {
     maxTime: timerDuration,
     state: "entering",
     sprite: randomSprite,
+    plateOnTable: null, // No plate on table initially
   };
 
   gameState.cats.push(newCat);
@@ -702,6 +705,7 @@ function updateCats(deltaTime: number): void {
         if (cat.timeRemaining <= 0) {
           cat.state = "leaving";
           cat.targetX = 1024 + 50; // Move off-screen to the right
+          cat.plateOnTable = null; // Remove plate from table when cat finishes eating
           console.log(`Cat ${cat.id} finished eating and is leaving`);
         }
         break;
@@ -1005,6 +1009,31 @@ function render() {
     // Re-enable smoothing for other elements if needed
     ctx.imageSmoothingEnabled = true;
   }
+
+  // Draw plates on table (after table so they appear on top)
+  gameState.cats.forEach((cat) => {
+    if (cat.plateOnTable) {
+      const plateScale = 0.2; // Scale for plates on table
+      const plateWidth = cat.plateOnTable.width * plateScale;
+      const plateHeight = cat.plateOnTable.height * plateScale;
+
+      // Position plate in front of the cat on the table
+      const plateX = cat.x;
+      const plateY = cat.y + 50; // Position on the table surface (moved down by 15 pixels)
+
+      ctx.imageSmoothingEnabled = false; // Keep pixelated look for plates
+
+      ctx.drawImage(
+        cat.plateOnTable,
+        plateX - plateWidth / 2,
+        plateY - plateHeight / 2,
+        plateWidth,
+        plateHeight
+      );
+
+      ctx.imageSmoothingEnabled = true;
+    }
+  });
 
   // Draw player character with transparent background (scaled down)
   let playerImage;
