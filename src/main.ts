@@ -232,12 +232,33 @@ function gameLoop() {
 function update() {
   const moveSpeed = 3;
 
+  // Define constants that match the render function
+  const tableY = 600;
+  const tableScale = 0.45; // Same scale as in render function
+  const tableHeight = 128; // Approximate table height in pixels (you can adjust this)
+  const scaledTableHeight = tableHeight * tableScale;
+  const tableStartX = Math.floor(1024 * (1 / 3));
+  const tableBottomY = tableY + scaledTableHeight / 2; // Bottom edge of table
+
+  const leftMargin = 60;
+  const rightMargin = 1024 - 60;
+  const stationX = 80;
+  const stationSpacing = 120;
+  const startY = tableY - 80 + 64;
+  const bottomMargin = 900;
+
+  // Store current position for collision detection
+  const currentX = gameState.player.x;
+  const currentY = gameState.player.y;
+  let newX = currentX;
+  let newY = currentY;
+
   // Handle horizontal movement and direction
   if (keys.ArrowLeft && !keys.ArrowRight) {
-    gameState.player.x -= moveSpeed;
+    newX = currentX - moveSpeed;
     gameState.player.direction = "left";
   } else if (keys.ArrowRight && !keys.ArrowLeft) {
-    gameState.player.x += moveSpeed;
+    newX = currentX + moveSpeed;
     gameState.player.direction = "right";
   } else {
     gameState.player.direction = "forward";
@@ -245,34 +266,53 @@ function update() {
 
   // Handle vertical movement
   if (keys.ArrowUp && !keys.ArrowDown) {
-    gameState.player.y -= moveSpeed;
+    newY = currentY - moveSpeed;
   } else if (keys.ArrowDown && !keys.ArrowUp) {
-    gameState.player.y += moveSpeed;
+    newY = currentY + moveSpeed;
   }
 
-  // Keep player within bounds (adjusted for serving area)
-  // Left side: server area, right side: allow walking in front of tables
-  const leftMargin = 60;
-  const tableStartX = Math.floor(1024 * (1 / 3));
-  const rightMargin = 1024 - 60;
-  gameState.player.x = Math.max(
-    leftMargin,
-    Math.min(rightMargin, gameState.player.x)
-  );
+  // Collision detection function
+  function wouldCollideWithTable(x: number, y: number): boolean {
+    // Add a buffer before the table starts so player can't walk right up to the edge
+    const tableBuffer = 40;
+    const tableLeftEdge = tableStartX - tableBuffer;
 
-  // Define constants that match the render function
-  const tableY = 600;
-  const stationX = 80;
-  const stationSpacing = 120;
-  const startY = tableY - 80 + 64;
+    // If player is in the serving area (left side), no collision with tables
+    if (x < tableLeftEdge) {
+      return false;
+    }
 
-  // Vertical bounds - keep player in reasonable area
-  const topMargin = startY - 80;
-  const bottomMargin = 900;
-  gameState.player.y = Math.max(
-    topMargin,
-    Math.min(bottomMargin, gameState.player.y)
-  );
+    // If player is in table area, check if they would be on or above the table
+    // Allow walking in front of tables (below table bottom edge)
+    return y < tableBottomY + 85;
+  }
+
+  // Check horizontal movement
+  if (newX >= leftMargin && newX <= rightMargin) {
+    if (!wouldCollideWithTable(newX, currentY)) {
+      gameState.player.x = newX;
+    }
+  }
+
+  // Check vertical movement
+  const topMarginInServingArea = startY - 80; // Allow reaching the topmost food station
+  const tableBuffer = 20;
+  const tableLeftEdge = tableStartX - tableBuffer;
+
+  if (gameState.player.x < tableLeftEdge) {
+    // In serving area - allow full vertical movement within bounds
+    if (newY >= topMarginInServingArea && newY <= bottomMargin) {
+      gameState.player.y = newY;
+    }
+  } else {
+    // In table area - only allow movement that doesn't collide with tables
+    if (
+      newY <= bottomMargin &&
+      !wouldCollideWithTable(gameState.player.x, newY)
+    ) {
+      gameState.player.y = newY;
+    }
+  }
 
   // Define stations array to match render function
   const stations = [
