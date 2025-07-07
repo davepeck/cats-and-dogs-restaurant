@@ -542,6 +542,10 @@ function update() {
       console.log(
         `Served ${targetCat.order} to cat ${targetCat.id}. Total served: ${gameState.catsServed}`
       );
+    } else {
+      // Wrong food attempted to be served
+      rejectedSound.currentTime = 0;
+      rejectedSound.play().catch(() => {});
     }
   }
   // Handle pickup when spacebar is pressed (only if not serving)
@@ -661,6 +665,9 @@ impatientMeowSound.volume = 0.66; // Adjust as needed
 
 const happyMeowSound = new Audio("/sounds/happy-meow.wav");
 happyMeowSound.volume = 0.33; // Adjust as needed
+
+const rejectedSound = new Audio("/sounds/rejected.wav");
+rejectedSound.volume = 0.5; // Adjust as needed
 
 function spawnCat(): void {
   const seat = findAvailableSeat();
