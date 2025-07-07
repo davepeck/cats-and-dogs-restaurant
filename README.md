@@ -14,7 +14,7 @@ We never hand-edited code. It's a total mess!
 
 But: AI isn't magic. We had to work really hard to think about how to describe
 the game we wanted in enough detail so that copilot could actually implement it.
-_That_ is &mdash; in this dad's opinion, at least &mdash; the important thing
+In this dad's opinion, at least, _that_ is the important thing
 to learn when first programming: not lines of code, but how to break down a
 problem into small pieces that fit together coherently, and how to explain
 each piece in exacting detail. :-)
