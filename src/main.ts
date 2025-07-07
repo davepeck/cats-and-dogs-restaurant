@@ -43,7 +43,7 @@ interface GameState {
     image: HTMLCanvasElement | null;
   } | null;
   cats: Cat[]; // Array of active cats
-  gameState: "playing" | "gameOver";
+  gameState: "notStarted" | "playing" | "gameOver";
   nextCatId: number;
   catsServed: number;
   lastCatSpawnTime: number;
@@ -64,7 +64,7 @@ const gameState: GameState = {
   nearbyCustomer: null, // No customer nearby initially
   carriedItem: null, // No item carried initially
   cats: [], // Start with no cats
-  gameState: "playing", // Start in playing state
+  gameState: "notStarted", // Start with the start screen
   nextCatId: 1,
   catsServed: 0,
   lastCatSpawnTime: 0,
@@ -262,6 +262,25 @@ document.addEventListener("keydown", (e) => {
   ) {
     e.preventDefault();
 
+    // Handle game start
+    if (e.code === "Space" && gameState.gameState === "notStarted") {
+      // Start the game
+      gameState.cats = [];
+      gameState.gameState = "playing";
+      gameState.nextCatId = 1;
+      gameState.catsServed = 0;
+      gameState.lastCatSpawnTime = 0;
+      gameState.catSpawnInterval = 8000;
+      gameState.player.x = 200;
+      gameState.player.y = 700;
+      gameState.player.direction = "forward";
+      gameState.carriedItem = null;
+      gameState.nearbyStation = null;
+      gameState.nearbyCustomer = null;
+      console.log("Game started!");
+      return;
+    }
+
     // Handle game restart
     if (e.code === "Space" && gameState.gameState === "gameOver") {
       // Reset game state completely
@@ -311,8 +330,11 @@ function gameLoop() {
 }
 
 function update() {
-  if (gameState.gameState === "gameOver") {
-    // Game over state - don't update anything
+  if (
+    gameState.gameState === "gameOver" ||
+    gameState.gameState === "notStarted"
+  ) {
+    // Game over or not started state - don't update anything
     return;
   }
 
@@ -693,24 +715,47 @@ function render() {
   // Clear canvas
   ctx.clearRect(0, 0, 1024, 1024);
 
-  if (gameState.gameState === "gameOver") {
-    // Draw game over screen
-    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+  // Always draw background first
+  ctx.drawImage(images.background, 0, 0, 1024, 1024);
+
+  if (gameState.gameState === "notStarted") {
+    // Draw start screen
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
     ctx.fillRect(0, 0, 1024, 1024);
 
     ctx.fillStyle = "white";
-    ctx.font = "48px Arial";
+    ctx.font = "bold 72px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("Game Over!", 512, 400);
+    ctx.fillText("Welcome to Catstaurant!", 512, 300);
 
-    ctx.font = "24px Arial";
-    ctx.fillText(`Cats Served: ${gameState.catsServed}`, 512, 450);
-    ctx.fillText("Press SPACE to restart", 512, 500);
+    ctx.font = "bold 32px Arial";
+    ctx.fillText("Serve the cats before they get impatient!", 512, 380);
+    ctx.fillText(
+      "Use arrow keys to move, SPACE to pick up and serve food",
+      512,
+      440
+    );
+    ctx.font = "bold 40px Arial";
+    ctx.fillText("Press SPACE to start", 512, 580);
     return;
   }
 
-  // Draw background
-  ctx.drawImage(images.background, 0, 0, 1024, 1024);
+  if (gameState.gameState === "gameOver") {
+    // Draw game over screen
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    ctx.fillStyle = "white";
+    ctx.font = "bold 72px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Game Over!", 512, 400);
+
+    ctx.font = "bold 32px Arial";
+    ctx.fillText(`Cats Served: ${gameState.catsServed}`, 512, 450);
+    ctx.font = "bold 40px Arial";
+    ctx.fillText("Press SPACE to restart", 512, 500);
+    return;
+  }
 
   // Draw food stations on the left side
   if (
