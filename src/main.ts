@@ -530,6 +530,8 @@ function update() {
     const targetCat = gameState.cats[gameState.nearbyCustomer];
     if (targetCat && targetCat.order === gameState.carriedItem.type) {
       // Correct order served!
+      platePickupDropSound.currentTime = 0;
+      platePickupDropSound.play().catch(() => {});
       targetCat.state = "eating";
       targetCat.timeRemaining = 2; // 2 seconds eating time
       targetCat.plateOnTable = gameState.carriedItem.image; // Place plate on table
@@ -540,7 +542,6 @@ function update() {
       );
     }
   }
-
   // Handle pickup when spacebar is pressed (only if not serving)
   else if (keys.Space && gameState.nearbyStation !== null) {
     const stationTypes = ["salmon", "shrimp", "mangoCake", "milk"] as const;
@@ -556,6 +557,8 @@ function update() {
       type: stationTypes[gameState.nearbyStation],
       image: stationImages[gameState.nearbyStation],
     };
+    platePickupDropSound.currentTime = 0;
+    platePickupDropSound.play().catch(() => {});
   }
 }
 
@@ -646,7 +649,10 @@ function findAvailableSeat(): { x: number; y: number } | null {
 }
 
 const doorbellSound = new Audio("/sounds/doorbell.wav");
-doorbellSound.volume = 0.7; // Adjust as needed
+doorbellSound.volume = 0.5; // Adjust as needed
+
+const platePickupDropSound = new Audio("/sounds/plate-pickup-or-drop.wav");
+platePickupDropSound.volume = 1.0; // Adjust as needed
 
 function spawnCat(): void {
   const seat = findAvailableSeat();
