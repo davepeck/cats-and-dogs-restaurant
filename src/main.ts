@@ -1057,4 +1057,19 @@ function render() {
     // Re-enable smoothing
     ctx.imageSmoothingEnabled = true;
   }
+
+  // Draw score in top left area during gameplay
+  if (gameState.gameState === "playing") {
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+
+    // Draw "SCORE" label
+    ctx.font = "bold 48px monospace";
+    ctx.fillText("SCORE", 245, 180); // Center of scoreboard area horizontally
+
+    // Draw score with leading zeros
+    ctx.font = "bold 64px monospace";
+    const scoreText = gameState.catsServed.toString().padStart(4, "0");
+    ctx.fillText(scoreText, 245, 240);
+  }
 }
