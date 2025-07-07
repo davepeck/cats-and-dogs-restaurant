@@ -244,6 +244,13 @@ images.mangoCakePlate.src = "/img/mango-cake-plate.png";
 images.milkMug.onload = onImageLoad;
 images.milkMug.src = "/img/milk-mug.png";
 
+// --- Background Music ---
+const gameplayMusic = new Audio("/sounds/gameplay-music.mp3");
+gameplayMusic.loop = true;
+gameplayMusic.volume = 0.5; // Adjust as needed
+
+let lastMusicState: "playing" | "notPlaying" = "notPlaying";
+
 // Keyboard input handling
 const keys = {
   ArrowLeft: false,
@@ -332,6 +339,7 @@ document.addEventListener("keyup", (e) => {
 function gameLoop() {
   // Update game state
   update();
+  updateMusicState(); // <-- Add this line
 
   // Render the game
   render();
@@ -1110,5 +1118,22 @@ function render() {
     ctx.font = "bold 48px monospace";
     const scoreText = gameState.catsServed.toString().padStart(4, "0");
     ctx.fillText(scoreText, 245, 240);
+  }
+}
+
+// Function to update music state based on game state
+function updateMusicState() {
+  if (gameState.gameState === "playing") {
+    if (lastMusicState !== "playing") {
+      gameplayMusic.currentTime = 0;
+      gameplayMusic.play().catch(() => {}); // Ignore play errors (e.g., not user-initiated)
+      lastMusicState = "playing";
+    }
+  } else {
+    if (lastMusicState !== "notPlaying") {
+      gameplayMusic.pause();
+      gameplayMusic.currentTime = 0;
+      lastMusicState = "notPlaying";
+    }
   }
 }
