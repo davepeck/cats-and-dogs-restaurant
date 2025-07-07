@@ -260,19 +260,20 @@ function update() {
     Math.min(rightMargin, gameState.player.x)
   );
 
+  // Check proximity to food stations (moved up to define startY first)
+  const tableY = 600;
+  const stationX = 80;
+  const stationSpacing = 120;
+  const startY = tableY - 80 + 64;
+
   // Vertical bounds - keep player in reasonable area
-  const topMargin = 300; // Don't go too high above table
+  const topMargin = startY - 80; // Don't go above the salmon station area
   const bottomMargin = 900; // Don't go too low below table
   gameState.player.y = Math.max(
     topMargin,
     Math.min(bottomMargin, gameState.player.y)
   );
 
-  // Check proximity to food stations
-  const tableY = 600;
-  const stationX = 80;
-  const stationSpacing = 120;
-  const startY = tableY - 80 + 64;
   const pickupAreaLeftBound = stationX - 40; // Allow standing on top of stations (left of center)
   const pickupAreaRightBound = Math.floor(1024 * (1 / 3)) - 30; // Before table area
 
