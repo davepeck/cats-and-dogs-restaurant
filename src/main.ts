@@ -278,6 +278,11 @@ document.addEventListener("keydown", (e) => {
       gameState.nearbyStation = null;
       gameState.nearbyCustomer = null;
       console.log("Game started!");
+
+      // Spawn the first cat immediately
+      spawnCat();
+      gameState.lastCatSpawnTime = Date.now(); // Set spawn time to now
+
       return;
     }
 
@@ -297,6 +302,11 @@ document.addEventListener("keydown", (e) => {
       gameState.nearbyStation = null;
       gameState.nearbyCustomer = null;
       console.log("Game restarted!");
+
+      // Spawn the first cat immediately on restart too
+      spawnCat();
+      gameState.lastCatSpawnTime = Date.now(); // Set spawn time to now
+
       return;
     }
 
@@ -1060,7 +1070,7 @@ function render() {
 
   // Draw score in top left area during gameplay
   if (gameState.gameState === "playing") {
-    ctx.fillStyle = "black";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.75)"; // 85% opacity black
     ctx.textAlign = "center";
 
     // Draw "SCORE" label
