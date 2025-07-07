@@ -1,5 +1,7 @@
 # Catstaurant
 
+![Screenshot](./public/img/screenshot.png)
+
 Ellie and Daddy vibe coded this game in two ~1.5 hour long sessions.
 
 We:
