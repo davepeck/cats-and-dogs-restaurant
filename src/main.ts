@@ -24,10 +24,11 @@ interface GameState {
     right: boolean;
   };
   nearbyStation: number | null; // Index of the station the player is near, or null
+  nearbyCustomer: number | null; // Index of the customer the player is near, or null
   carriedItem: {
     type: "salmon" | "shrimp" | "mangoCake" | "milk" | null;
     image: HTMLCanvasElement | null;
-  };
+  } | null;
 }
 
 const gameState: GameState = {
@@ -41,10 +42,8 @@ const gameState: GameState = {
     right: false,
   },
   nearbyStation: null, // No station nearby initially
-  carriedItem: {
-    type: null,
-    image: null,
-  },
+  nearbyCustomer: null, // No customer nearby initially
+  carriedItem: null, // No item carried initially
 };
 
 // Load images
@@ -251,65 +250,103 @@ function update() {
     gameState.player.y += moveSpeed;
   }
 
-  // Keep player within bounds (adjusted for smaller character and table layout)
-  // Left side: more room for server area, right side: stop before table
-  const leftMargin = 60; // Smaller margin since character is smaller
-  const rightMargin = Math.floor(1024 * (1 / 3)) - 30; // Stop before table starts with small buffer
+  // Keep player within bounds (adjusted for serving area)
+  // Left side: server area, right side: allow walking in front of tables
+  const leftMargin = 60;
+  const tableStartX = Math.floor(1024 * (1 / 3));
+  const rightMargin = 1024 - 60;
   gameState.player.x = Math.max(
     leftMargin,
     Math.min(rightMargin, gameState.player.x)
   );
 
-  // Check proximity to food stations (moved up to define startY first)
+  // Define constants that match the render function
   const tableY = 600;
   const stationX = 80;
   const stationSpacing = 120;
   const startY = tableY - 80 + 64;
 
   // Vertical bounds - keep player in reasonable area
-  const topMargin = startY - 80; // Don't go above the salmon station area
-  const bottomMargin = 900; // Don't go too low below table
+  const topMargin = startY - 80;
+  const bottomMargin = 900;
   gameState.player.y = Math.max(
     topMargin,
     Math.min(bottomMargin, gameState.player.y)
   );
 
-  const pickupAreaLeftBound = stationX - 40; // Allow standing on top of stations (left of center)
-  const pickupAreaRightBound = Math.floor(1024 * (1 / 3)) - 30; // Before table area
-
+  // Define stations array to match render function
   const stations = [
-    { x: stationX, y: startY },
-    { x: stationX, y: startY + stationSpacing },
-    { x: stationX, y: startY + stationSpacing * 2 },
-    { x: stationX, y: startY + stationSpacing * 3 },
+    { y: startY },
+    { y: startY + stationSpacing },
+    { y: startY + stationSpacing * 2 },
+    { y: startY + stationSpacing * 3 },
   ];
 
-  // Check if player is in the pickup area (including on top of stations)
+  // Reset proximity states
   gameState.nearbyStation = null;
+  gameState.nearbyCustomer = null;
 
-  if (
-    gameState.player.x >= pickupAreaLeftBound &&
-    gameState.player.x <= pickupAreaRightBound
-  ) {
-    // Use the girl's hand position (3/4 down the sprite) for more natural interaction
-    const characterScale = 0.4;
-    const handY =
-      gameState.player.y +
-      0.25 * (transparentImages.girlForward?.height || 0) * characterScale;
+  const handY = gameState.player.y + 16; // Girl's hand position
 
-    // Find which station the player's hands are aligned with
-    stations.forEach((station, index) => {
-      const stationTopY = station.y - 60; // Station area extends above and below center
-      const stationBottomY = station.y + 60;
+  // Cat positions that match the render function
+  const cat1X = tableStartX + 150;
+  const cat2X = tableStartX + 400;
 
-      if (handY >= stationTopY && handY <= stationBottomY) {
-        gameState.nearbyStation = index;
-      }
-    });
+  // Check if player is in serving area (in front of table)
+  const isInServingArea =
+    gameState.player.x >= tableStartX && gameState.player.y >= tableY - 80;
+
+  if (isInServingArea) {
+    // Check if player is aligned with any cat (33% of sprite width tolerance)
+    const catWidth = 64;
+    const servingTolerance = catWidth * 0.33;
+
+    // Check cat 1
+    if (Math.abs(gameState.player.x - cat1X) <= servingTolerance) {
+      gameState.nearbyCustomer = 0;
+    }
+    // Check cat 2
+    else if (Math.abs(gameState.player.x - cat2X) <= servingTolerance) {
+      gameState.nearbyCustomer = 1;
+    }
   }
 
-  // Handle pickup when spacebar is pressed - replace carried item with station item
-  if (keys.Space && gameState.nearbyStation !== null) {
+  // If not in serving area, check food stations
+  if (!isInServingArea) {
+    const pickupAreaLeftBound = stationX - 40;
+    const pickupAreaRightBound = Math.floor(1024 * (1 / 3)) - 30;
+
+    // Check if player is within horizontal bounds for pickup
+    if (
+      gameState.player.x >= pickupAreaLeftBound &&
+      gameState.player.x <= pickupAreaRightBound
+    ) {
+      // Find which station the player's hands are aligned with
+      stations.forEach((station, index) => {
+        const stationTopY = station.y - 60;
+        const stationBottomY = station.y + 60;
+
+        if (handY >= stationTopY && handY <= stationBottomY) {
+          gameState.nearbyStation = index;
+        }
+      });
+    }
+  }
+
+  // Handle serving when spacebar is pressed
+  if (
+    keys.Space &&
+    gameState.nearbyCustomer !== null &&
+    gameState.carriedItem
+  ) {
+    console.log(
+      `Serving ${gameState.carriedItem.type} to cat ${gameState.nearbyCustomer}`
+    );
+    gameState.carriedItem = null; // Remove the carried item
+  }
+
+  // Handle pickup when spacebar is pressed (only if not serving)
+  else if (keys.Space && gameState.nearbyStation !== null) {
     const stationTypes = ["salmon", "shrimp", "mangoCake", "milk"] as const;
     const stationImages = [
       transparentImages.salmonPlate,
@@ -319,8 +356,10 @@ function update() {
     ];
 
     // Always pick up the item from the nearby station, replacing any carried item
-    gameState.carriedItem.type = stationTypes[gameState.nearbyStation];
-    gameState.carriedItem.image = stationImages[gameState.nearbyStation];
+    gameState.carriedItem = {
+      type: stationTypes[gameState.nearbyStation],
+      image: stationImages[gameState.nearbyStation],
+    };
   }
 }
 
@@ -432,6 +471,32 @@ function render() {
     const catY = tableY - 20; // Position them slightly behind/above table level
 
     ctx.imageSmoothingEnabled = false;
+
+    // Draw serving highlight if player can serve a cat
+    if (gameState.nearbyCustomer !== null) {
+      ctx.imageSmoothingEnabled = true; // Enable smoothing for glow
+
+      const targetCatX = gameState.nearbyCustomer === 0 ? cat1X : cat3X;
+      const glowRadius = 80; // Bright glow around serveable cat
+      const glowGradient = ctx.createRadialGradient(
+        targetCatX,
+        catY,
+        0,
+        targetCatX,
+        catY,
+        glowRadius
+      );
+      glowGradient.addColorStop(0, "rgba(0, 255, 0, 0.8)"); // Bright green glow
+      glowGradient.addColorStop(0.5, "rgba(0, 255, 0, 0.5)"); // Mid fade
+      glowGradient.addColorStop(1, "rgba(0, 255, 0, 0)"); // Fade to transparent
+
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(targetCatX, catY, glowRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.imageSmoothingEnabled = false; // Back to pixelated for sprites
+    }
 
     // Draw first cat (cat1)
     const cat1Width = transparentImages.cat1.width * catScale;
@@ -570,7 +635,11 @@ function render() {
     );
 
     // Draw carried item in player's hands if carrying something
-    if (gameState.carriedItem.type && gameState.carriedItem.image) {
+    if (
+      gameState.carriedItem &&
+      gameState.carriedItem.type &&
+      gameState.carriedItem.image
+    ) {
       const carriedScale = 0.15; // Smaller scale for carried items
       const carriedWidth = gameState.carriedItem.image.width * carriedScale;
       const carriedHeight = gameState.carriedItem.image.height * carriedScale;
