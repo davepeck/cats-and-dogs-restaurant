@@ -249,7 +249,11 @@ const gameplayMusic = new Audio("/sounds/gameplay-music.mp3");
 gameplayMusic.loop = true;
 gameplayMusic.volume = 0.5; // Adjust as needed
 
-let lastMusicState: "playing" | "notPlaying" = "notPlaying";
+const gameoverMusic = new Audio("/sounds/gameover-music.mp3");
+gameoverMusic.loop = false;
+gameoverMusic.volume = 0.7; // Adjust as needed
+
+let lastMusicState: "playing" | "notPlaying" | "gameOver" = "notPlaying";
 
 // Keyboard input handling
 const keys = {
@@ -1126,13 +1130,25 @@ function updateMusicState() {
   if (gameState.gameState === "playing") {
     if (lastMusicState !== "playing") {
       gameplayMusic.currentTime = 0;
-      gameplayMusic.play().catch(() => {}); // Ignore play errors (e.g., not user-initiated)
+      gameplayMusic.play().catch(() => {});
+      gameoverMusic.pause();
+      gameoverMusic.currentTime = 0;
       lastMusicState = "playing";
+    }
+  } else if (gameState.gameState === "gameOver") {
+    if (lastMusicState !== "gameOver") {
+      gameplayMusic.pause();
+      gameplayMusic.currentTime = 0;
+      gameoverMusic.currentTime = 0;
+      gameoverMusic.play().catch(() => {});
+      lastMusicState = "gameOver";
     }
   } else {
     if (lastMusicState !== "notPlaying") {
       gameplayMusic.pause();
       gameplayMusic.currentTime = 0;
+      gameoverMusic.pause();
+      gameoverMusic.currentTime = 0;
       lastMusicState = "notPlaying";
     }
   }
