@@ -13,6 +13,19 @@ const canvas = document.querySelector<HTMLCanvasElement>("#gameCanvas")!;
 const ctx = canvas.getContext("2d")!;
 
 // Game state
+interface Cat {
+  id: number;
+  x: number;
+  y: number;
+  targetX: number; // Where the cat is walking to
+  targetY: number;
+  order: "salmon" | "shrimp" | "mangoCake" | "milk";
+  timeRemaining: number; // In seconds
+  maxTime: number; // Initial time for this cat
+  state: "entering" | "seated" | "eating" | "leaving";
+  sprite: HTMLCanvasElement | null; // Which cat sprite to use
+}
+
 interface GameState {
   player: {
     x: number;
@@ -29,6 +42,12 @@ interface GameState {
     type: "salmon" | "shrimp" | "mangoCake" | "milk" | null;
     image: HTMLCanvasElement | null;
   } | null;
+  cats: Cat[]; // Array of active cats
+  gameState: "playing" | "gameOver";
+  nextCatId: number;
+  catsServed: number;
+  lastCatSpawnTime: number;
+  catSpawnInterval: number; // Time between cat spawns in milliseconds
 }
 
 const gameState: GameState = {
@@ -44,6 +63,12 @@ const gameState: GameState = {
   nearbyStation: null, // No station nearby initially
   nearbyCustomer: null, // No customer nearby initially
   carriedItem: null, // No item carried initially
+  cats: [], // Start with no cats
+  gameState: "playing", // Start in playing state
+  nextCatId: 1,
+  catsServed: 0,
+  lastCatSpawnTime: 0,
+  catSpawnInterval: 8000, // 8 seconds between cat spawns initially
 };
 
 // Load images
@@ -54,9 +79,15 @@ const images = {
   girlRight: new Image(),
   table: new Image(),
   cat1: new Image(),
-  cat3: new Image(), // I'll use cat1 and cat3 as they look good together
+  cat2: new Image(),
+  cat3: new Image(),
+  cat4: new Image(),
+  cat5: new Image(),
   speechBubble: new Image(),
   mangoCakeIcon: new Image(),
+  salmonIcon: new Image(),
+  shrimpIcon: new Image(),
+  milkIcon: new Image(),
   salmonPlate: new Image(),
   shrimpPlate: new Image(),
   mangoCakePlate: new Image(),
@@ -70,9 +101,15 @@ const transparentImages = {
   girlRight: null as HTMLCanvasElement | null,
   table: null as HTMLCanvasElement | null,
   cat1: null as HTMLCanvasElement | null,
+  cat2: null as HTMLCanvasElement | null,
   cat3: null as HTMLCanvasElement | null,
+  cat4: null as HTMLCanvasElement | null,
+  cat5: null as HTMLCanvasElement | null,
   speechBubble: null as HTMLCanvasElement | null,
   mangoCakeIcon: null as HTMLCanvasElement | null,
+  salmonIcon: null as HTMLCanvasElement | null,
+  shrimpIcon: null as HTMLCanvasElement | null,
+  milkIcon: null as HTMLCanvasElement | null,
   salmonPlate: null as HTMLCanvasElement | null,
   shrimpPlate: null as HTMLCanvasElement | null,
   mangoCakePlate: null as HTMLCanvasElement | null,
@@ -80,7 +117,7 @@ const transparentImages = {
 };
 
 let imagesLoaded = 0;
-const totalImages = 13;
+const totalImages = 19;
 
 // Function to make white/near-white pixels transparent
 function makeWhiteTransparent(image: HTMLImageElement): HTMLCanvasElement {
@@ -125,11 +162,17 @@ function onImageLoad() {
     transparentImages.girlRight = makeWhiteTransparent(images.girlRight);
     transparentImages.table = makeWhiteTransparent(images.table);
     transparentImages.cat1 = makeWhiteTransparent(images.cat1);
+    transparentImages.cat2 = makeWhiteTransparent(images.cat2);
     transparentImages.cat3 = makeWhiteTransparent(images.cat3);
+    transparentImages.cat4 = makeWhiteTransparent(images.cat4);
+    transparentImages.cat5 = makeWhiteTransparent(images.cat5);
     transparentImages.speechBubble = makeWhiteTransparent(images.speechBubble);
     transparentImages.mangoCakeIcon = makeWhiteTransparent(
       images.mangoCakeIcon
     );
+    transparentImages.salmonIcon = makeWhiteTransparent(images.salmonIcon);
+    transparentImages.shrimpIcon = makeWhiteTransparent(images.shrimpIcon);
+    transparentImages.milkIcon = makeWhiteTransparent(images.milkIcon);
     transparentImages.salmonPlate = makeWhiteTransparent(images.salmonPlate);
     transparentImages.shrimpPlate = makeWhiteTransparent(images.shrimpPlate);
     transparentImages.mangoCakePlate = makeWhiteTransparent(
@@ -161,14 +204,32 @@ images.table.src = "/img/table.png";
 images.cat1.onload = onImageLoad;
 images.cat1.src = "/img/cat1.png";
 
+images.cat2.onload = onImageLoad;
+images.cat2.src = "/img/cat2.png";
+
 images.cat3.onload = onImageLoad;
 images.cat3.src = "/img/cat3.png";
+
+images.cat4.onload = onImageLoad;
+images.cat4.src = "/img/cat4.png";
+
+images.cat5.onload = onImageLoad;
+images.cat5.src = "/img/cat5.png";
 
 images.speechBubble.onload = onImageLoad;
 images.speechBubble.src = "/img/speech-bubble-fixed.png";
 
 images.mangoCakeIcon.onload = onImageLoad;
 images.mangoCakeIcon.src = "/img/mango-cake-icon.png";
+
+images.salmonIcon.onload = onImageLoad;
+images.salmonIcon.src = "/img/salmon-icon.png";
+
+images.shrimpIcon.onload = onImageLoad;
+images.shrimpIcon.src = "/img/shrimp-icon.png";
+
+images.milkIcon.onload = onImageLoad;
+images.milkIcon.src = "/img/milk-icon.png";
 
 images.salmonPlate.onload = onImageLoad;
 images.salmonPlate.src = "/img/salmon-plate.png";
@@ -200,6 +261,26 @@ document.addEventListener("keydown", (e) => {
     e.code === "Space"
   ) {
     e.preventDefault();
+
+    // Handle game restart
+    if (e.code === "Space" && gameState.gameState === "gameOver") {
+      // Reset game state completely
+      gameState.cats = [];
+      gameState.gameState = "playing";
+      gameState.nextCatId = 1;
+      gameState.catsServed = 0;
+      gameState.lastCatSpawnTime = 0; // Reset to 0 so it gets initialized properly
+      gameState.catSpawnInterval = 8000;
+      gameState.player.x = 200;
+      gameState.player.y = 700;
+      gameState.player.direction = "forward";
+      gameState.carriedItem = null;
+      gameState.nearbyStation = null;
+      gameState.nearbyCustomer = null;
+      console.log("Game restarted!");
+      return;
+    }
+
     keys[e.code as keyof typeof keys] = true;
   }
 });
@@ -230,7 +311,35 @@ function gameLoop() {
 }
 
 function update() {
+  if (gameState.gameState === "gameOver") {
+    // Game over state - don't update anything
+    return;
+  }
+
   const moveSpeed = 3;
+  const currentTime = Date.now();
+
+  // Initialize lastCatSpawnTime if it's not set
+  if (gameState.lastCatSpawnTime === 0) {
+    gameState.lastCatSpawnTime = currentTime;
+  }
+
+  // Calculate delta time for cat updates (time since last frame, not since last spawn)
+  const deltaTimeSeconds = 1 / 60; // Assume 60fps for consistent timing
+
+  // Update cats (movement, timers, etc.)
+  updateCats(deltaTimeSeconds);
+
+  // Spawn new cats based on timer
+  if (currentTime - gameState.lastCatSpawnTime > gameState.catSpawnInterval) {
+    console.log(
+      `Attempting to spawn cat. Time since last spawn: ${
+        currentTime - gameState.lastCatSpawnTime
+      }ms`
+    );
+    spawnCat();
+    gameState.lastCatSpawnTime = currentTime;
+  }
 
   // Define constants that match the render function
   const tableY = 600;
@@ -328,30 +437,10 @@ function update() {
 
   const handY = gameState.player.y + 16; // Girl's hand position
 
-  // Cat positions that match the render function
-  const cat1X = tableStartX + 150;
-  const cat2X = tableStartX + 400;
-
-  // Check if player is in serving area (in front of table)
+  // Check for nearby food stations
   const isInServingArea =
     gameState.player.x >= tableStartX && gameState.player.y >= tableY - 80;
 
-  if (isInServingArea) {
-    // Check if player is aligned with any cat (33% of sprite width tolerance)
-    const catWidth = 64;
-    const servingTolerance = catWidth * 0.33;
-
-    // Check cat 1
-    if (Math.abs(gameState.player.x - cat1X) <= servingTolerance) {
-      gameState.nearbyCustomer = 0;
-    }
-    // Check cat 2
-    else if (Math.abs(gameState.player.x - cat2X) <= servingTolerance) {
-      gameState.nearbyCustomer = 1;
-    }
-  }
-
-  // If not in serving area, check food stations
   if (!isInServingArea) {
     const pickupAreaLeftBound = stationX - 40;
     const pickupAreaRightBound = Math.floor(1024 * (1 / 3)) - 30;
@@ -373,16 +462,37 @@ function update() {
     }
   }
 
+  // Check for nearby cats (dynamic)
+  if (isInServingArea) {
+    const catWidth = 64;
+    const servingTolerance = catWidth * 0.33;
+
+    gameState.cats.forEach((cat, index) => {
+      if (cat.state === "seated") {
+        if (Math.abs(gameState.player.x - cat.x) <= servingTolerance) {
+          gameState.nearbyCustomer = index;
+        }
+      }
+    });
+  }
+
   // Handle serving when spacebar is pressed
   if (
     keys.Space &&
     gameState.nearbyCustomer !== null &&
     gameState.carriedItem
   ) {
-    console.log(
-      `Serving ${gameState.carriedItem.type} to cat ${gameState.nearbyCustomer}`
-    );
-    gameState.carriedItem = null; // Remove the carried item
+    const targetCat = gameState.cats[gameState.nearbyCustomer];
+    if (targetCat && targetCat.order === gameState.carriedItem.type) {
+      // Correct order served!
+      targetCat.state = "eating";
+      targetCat.timeRemaining = 2; // 2 seconds eating time
+      gameState.carriedItem = null;
+      gameState.catsServed++;
+      console.log(
+        `Served ${targetCat.order} to cat ${targetCat.id}. Total served: ${gameState.catsServed}`
+      );
+    }
   }
 
   // Handle pickup when spacebar is pressed (only if not serving)
@@ -403,9 +513,201 @@ function update() {
   }
 }
 
+// Cat management functions
+function getRandomCatSprite(): HTMLCanvasElement | null {
+  const catSprites = [
+    transparentImages.cat1,
+    transparentImages.cat2,
+    transparentImages.cat3,
+    transparentImages.cat4,
+    transparentImages.cat5,
+  ];
+  const randomIndex = Math.floor(Math.random() * catSprites.length);
+  return catSprites[randomIndex];
+}
+
+function getRandomOrder(): "salmon" | "shrimp" | "mangoCake" | "milk" {
+  const orders = ["salmon", "shrimp", "mangoCake", "milk"] as const;
+  const randomIndex = Math.floor(Math.random() * orders.length);
+  return orders[randomIndex];
+}
+
+function getOrderIcon(
+  order: "salmon" | "shrimp" | "mangoCake" | "milk"
+): HTMLCanvasElement | null {
+  switch (order) {
+    case "salmon":
+      return transparentImages.salmonIcon;
+    case "shrimp":
+      return transparentImages.shrimpIcon;
+    case "mangoCake":
+      return transparentImages.mangoCakeIcon;
+    case "milk":
+      return transparentImages.milkIcon;
+    default:
+      return null;
+  }
+}
+
+function findAvailableSeat(): { x: number; y: number } | null {
+  const tableStartX = Math.floor(1024 * (1 / 3));
+  const tableY = 600;
+  const catScale = 0.5;
+  const catWidth = 64 * catScale; // Approximate cat width
+  const servingZoneWidth = catWidth * 0.33; // 33% of sprite width
+  const minSpacing = catWidth + servingZoneWidth * 2; // Cat width + both serving zones
+
+  // Define possible seat positions along the table
+  const seatStartX = tableStartX + 100;
+  const seatEndX = 1024 - 100;
+  const seatY = tableY - 20;
+
+  // Create array of potential seats
+  const potentialSeats: { x: number; y: number }[] = [];
+
+  // Find all available seat positions
+  for (let x = seatStartX; x < seatEndX; x += 80) {
+    // Increased spacing to 80 pixels
+    let canSitHere = true;
+
+    // Check if this position conflicts with any existing cats
+    for (const cat of gameState.cats) {
+      if (
+        cat.state === "seated" ||
+        cat.state === "eating" ||
+        cat.state === "entering"
+      ) {
+        const distance = Math.abs(x - cat.targetX); // Use targetX instead of current x for entering cats
+        if (distance < minSpacing) {
+          canSitHere = false;
+          break;
+        }
+      }
+    }
+
+    if (canSitHere) {
+      potentialSeats.push({ x, y: seatY });
+    }
+  }
+
+  // Randomly select from available seats
+  if (potentialSeats.length > 0) {
+    const randomIndex = Math.floor(Math.random() * potentialSeats.length);
+    return potentialSeats[randomIndex];
+  }
+
+  return null; // No available seats
+}
+
+function spawnCat(): void {
+  const seat = findAvailableSeat();
+  if (!seat) return; // No available seats
+
+  // Calculate timer duration based on difficulty
+  const baseTime = 12; // 12 seconds initially
+  const difficultyReduction = Math.floor(gameState.catsServed / 3); // 1 second reduction per 3 cats served
+  const timerDuration = Math.max(5, baseTime - difficultyReduction); // Minimum 5 seconds
+
+  const randomOrder = getRandomOrder();
+  const randomSprite = getRandomCatSprite();
+
+  console.log(
+    `Spawning cat at position (${seat.x}, ${seat.y}) with order: ${randomOrder}, timer: ${timerDuration}s`
+  );
+
+  const newCat: Cat = {
+    id: gameState.nextCatId++,
+    x: 1024 + 50, // Start off-screen to the right
+    y: seat.y,
+    targetX: seat.x,
+    targetY: seat.y,
+    order: randomOrder,
+    timeRemaining: timerDuration,
+    maxTime: timerDuration,
+    state: "entering",
+    sprite: randomSprite,
+  };
+
+  gameState.cats.push(newCat);
+}
+
+function updateCats(deltaTime: number): void {
+  const catMoveSpeed = 2;
+
+  for (let i = gameState.cats.length - 1; i >= 0; i--) {
+    const cat = gameState.cats[i];
+
+    // Update cat movement based on state
+    switch (cat.state) {
+      case "entering":
+        // Move cat towards its target seat
+        const dx = cat.targetX - cat.x;
+        if (Math.abs(dx) > catMoveSpeed) {
+          cat.x += dx > 0 ? catMoveSpeed : -catMoveSpeed;
+        } else {
+          cat.x = cat.targetX;
+          cat.state = "seated";
+          console.log(
+            `Cat ${cat.id} has seated and is ordering ${cat.order}. Timer: ${cat.timeRemaining}s`
+          );
+        }
+        break;
+
+      case "seated":
+        // Cat is seated, countdown timer
+        cat.timeRemaining -= deltaTime;
+        if (cat.timeRemaining <= 0) {
+          // Game over - cat ran out of patience
+          console.log(`Cat ${cat.id} ran out of patience! Game over.`);
+          gameState.gameState = "gameOver";
+          return;
+        }
+        break;
+
+      case "eating":
+        // Cat is eating, wait a bit then start leaving
+        cat.timeRemaining -= deltaTime;
+        if (cat.timeRemaining <= 0) {
+          cat.state = "leaving";
+          cat.targetX = 1024 + 50; // Move off-screen to the right
+          console.log(`Cat ${cat.id} finished eating and is leaving`);
+        }
+        break;
+
+      case "leaving":
+        // Move cat towards exit
+        const exitDx = cat.targetX - cat.x;
+        if (Math.abs(exitDx) > catMoveSpeed) {
+          cat.x += exitDx > 0 ? catMoveSpeed : -catMoveSpeed;
+        } else {
+          // Cat has left, remove from array
+          console.log(`Cat ${cat.id} has left the restaurant`);
+          gameState.cats.splice(i, 1);
+        }
+        break;
+    }
+  }
+}
+
 function render() {
   // Clear canvas
   ctx.clearRect(0, 0, 1024, 1024);
+
+  if (gameState.gameState === "gameOver") {
+    // Draw game over screen
+    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    ctx.fillStyle = "white";
+    ctx.font = "48px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Game Over!", 512, 400);
+
+    ctx.font = "24px Arial";
+    ctx.fillText(`Cats Served: ${gameState.catsServed}`, 512, 450);
+    ctx.fillText("Press SPACE to restart", 512, 500);
+    return;
+  }
 
   // Draw background
   ctx.drawImage(images.background, 0, 0, 1024, 1024);
@@ -499,31 +801,27 @@ function render() {
     ctx.imageSmoothingEnabled = true;
   }
 
-  // Draw cat customers BEHIND the table (so table will overlap them)
-  if (transparentImages.cat1 && transparentImages.cat3) {
-    const tableStartX = Math.floor(1024 * (1 / 3));
-    const tableY = 600;
-    const catScale = 0.5; // Scale cats down to appropriate size
+  // Draw dynamic cats
+  gameState.cats.forEach((cat, index) => {
+    if (!cat.sprite) return;
 
-    // Position cats along the table length
-    const cat1X = tableStartX + 150; // First cat position
-    const cat3X = tableStartX + 400; // Second cat position
-    const catY = tableY - 20; // Position them slightly behind/above table level
+    const catScale = 0.5; // Scale cats down to appropriate size
+    const catWidth = cat.sprite.width * catScale;
+    const catHeight = cat.sprite.height * catScale;
 
     ctx.imageSmoothingEnabled = false;
 
-    // Draw serving highlight if player can serve a cat
-    if (gameState.nearbyCustomer !== null) {
+    // Draw serving highlight if player can serve this cat
+    if (gameState.nearbyCustomer === index && cat.state === "seated") {
       ctx.imageSmoothingEnabled = true; // Enable smoothing for glow
 
-      const targetCatX = gameState.nearbyCustomer === 0 ? cat1X : cat3X;
       const glowRadius = 80; // Bright glow around serveable cat
       const glowGradient = ctx.createRadialGradient(
-        targetCatX,
-        catY,
+        cat.x,
+        cat.y,
         0,
-        targetCatX,
-        catY,
+        cat.x,
+        cat.y,
         glowRadius
       );
       glowGradient.addColorStop(0, "rgba(0, 255, 0, 0.8)"); // Bright green glow
@@ -532,74 +830,83 @@ function render() {
 
       ctx.fillStyle = glowGradient;
       ctx.beginPath();
-      ctx.arc(targetCatX, catY, glowRadius, 0, Math.PI * 2);
+      ctx.arc(cat.x, cat.y, glowRadius, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.imageSmoothingEnabled = false; // Back to pixelated for sprites
     }
 
-    // Draw first cat (cat1)
-    const cat1Width = transparentImages.cat1.width * catScale;
-    const cat1Height = transparentImages.cat1.height * catScale;
+    // Draw the cat
     ctx.drawImage(
-      transparentImages.cat1,
-      cat1X - cat1Width / 2,
-      catY - cat1Height / 2,
-      cat1Width,
-      cat1Height
+      cat.sprite,
+      cat.x - catWidth / 2,
+      cat.y - catHeight / 2,
+      catWidth,
+      catHeight
     );
 
-    // Draw second cat (cat3)
-    const cat3Width = transparentImages.cat3.width * catScale;
-    const cat3Height = transparentImages.cat3.height * catScale;
-    ctx.drawImage(
-      transparentImages.cat3,
-      cat3X - cat3Width / 2,
-      catY - cat3Height / 2,
-      cat3Width,
-      cat3Height
-    );
+    // Draw speech bubble and order icon for seated cats
+    if (cat.state === "seated" && transparentImages.speechBubble) {
+      const orderIcon = getOrderIcon(cat.order);
+      if (orderIcon) {
+        const bubbleScale = 0.35;
+        const bubbleWidth = transparentImages.speechBubble.width * bubbleScale;
+        const bubbleHeight =
+          transparentImages.speechBubble.height * bubbleScale;
 
-    // Draw speech bubble above cat1 with mango cake icon
-    if (transparentImages.speechBubble && transparentImages.mangoCakeIcon) {
-      const bubbleScale = 0.35; // Scale speech bubble down significantly
-      const bubbleWidth = transparentImages.speechBubble.width * bubbleScale;
-      const bubbleHeight = transparentImages.speechBubble.height * bubbleScale;
+        // Position bubble above cat
+        const bubbleX = cat.x + 20;
+        const bubbleY = cat.y - catHeight / 2 - bubbleHeight / 2 - 20;
 
-      // Position bubble above cat1, accounting for the triangle being on bottom-left
-      // The triangle should point toward cat1's head
-      const bubbleX = cat1X + 20; // Offset slightly right so triangle points to cat
-      const bubbleY = catY - cat1Height / 2 - bubbleHeight / 2 - 20; // Above cat's head
+        // Draw the speech bubble
+        ctx.drawImage(
+          transparentImages.speechBubble,
+          bubbleX - bubbleWidth / 2,
+          bubbleY - bubbleHeight / 2,
+          bubbleWidth,
+          bubbleHeight
+        );
 
-      // Draw the speech bubble
-      ctx.drawImage(
-        transparentImages.speechBubble,
-        bubbleX - bubbleWidth / 2,
-        bubbleY - bubbleHeight / 2,
-        bubbleWidth,
-        bubbleHeight
-      );
+        // Draw order icon inside the speech bubble
+        const iconScale = 0.15;
+        const iconWidth = orderIcon.width * iconScale;
+        const iconHeight = orderIcon.height * iconScale;
 
-      // Draw mango cake icon inside the speech bubble
-      const iconScale = 0.15; // Very small scale for the icon
-      const iconWidth = transparentImages.mangoCakeIcon.width * iconScale;
-      const iconHeight = transparentImages.mangoCakeIcon.height * iconScale;
+        const iconX = bubbleX;
+        const iconY = bubbleY - 10;
 
-      // Center the icon in the bubble (slightly up from center)
-      const iconX = bubbleX;
-      const iconY = bubbleY - 10; // Slightly above center of bubble
+        ctx.drawImage(
+          orderIcon,
+          iconX - iconWidth / 2,
+          iconY - iconHeight / 2,
+          iconWidth,
+          iconHeight
+        );
 
-      ctx.drawImage(
-        transparentImages.mangoCakeIcon,
-        iconX - iconWidth / 2,
-        iconY - iconHeight / 2,
-        iconWidth,
-        iconHeight
-      );
+        // Draw timer bar above speech bubble
+        const timerBarWidth = bubbleWidth;
+        const timerBarHeight = 8;
+        const timerBarX = bubbleX - timerBarWidth / 2;
+        const timerBarY = bubbleY - bubbleHeight / 2 - 15;
+
+        // Timer background (gray)
+        ctx.fillStyle = "rgba(128, 128, 128, 0.8)";
+        ctx.fillRect(timerBarX, timerBarY, timerBarWidth, timerBarHeight);
+
+        // Timer foreground (white, shrinks as time runs out)
+        const timerProgress = cat.timeRemaining / cat.maxTime;
+        ctx.fillStyle = "white";
+        ctx.fillRect(
+          timerBarX,
+          timerBarY,
+          timerBarWidth * timerProgress,
+          timerBarHeight
+        );
+      }
     }
 
     ctx.imageSmoothingEnabled = true;
-  }
+  });
 
   // Draw table extending from right edge to about 2/3 across the canvas
   // Table should be tiled horizontally (drawn AFTER cats so it appears in front)
