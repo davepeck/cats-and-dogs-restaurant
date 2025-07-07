@@ -184,6 +184,9 @@ const keys = {
   Space: false,
 };
 
+// Track if space was just pressed this frame (not held)
+let spaceJustPressed = false;
+
 document.addEventListener("keydown", (e) => {
   if (
     e.code === "ArrowLeft" ||
@@ -242,6 +245,11 @@ document.addEventListener("keydown", (e) => {
       return;
     }
 
+    // Set spaceJustPressed flag only if space wasn't already pressed
+    if (e.code === "Space" && !keys.Space) {
+      spaceJustPressed = true;
+    }
+
     keys[e.code as keyof typeof keys] = true;
   }
 });
@@ -256,6 +264,11 @@ document.addEventListener("keyup", (e) => {
   ) {
     e.preventDefault();
     keys[e.code as keyof typeof keys] = false;
+
+    // Reset spaceJustPressed when space is released
+    if (e.code === "Space") {
+      spaceJustPressed = false;
+    }
   }
 });
 
@@ -381,7 +394,7 @@ function update() {
 
   // Check vertical movement
   const topMarginInServingArea = startY - 80; // Allow reaching the topmost food station
-  const tableBuffer = 20;
+  const tableBuffer = 40;
   const tableLeftEdge = tableStartX - tableBuffer;
 
   if (gameState.player.x < tableLeftEdge) {
@@ -454,7 +467,7 @@ function update() {
 
   // Handle serving when spacebar is pressed
   if (
-    keys.Space &&
+    spaceJustPressed &&
     gameState.nearbyCustomer !== null &&
     gameState.carriedItem
   ) {
@@ -480,7 +493,7 @@ function update() {
     }
   }
   // Handle pickup when spacebar is pressed (only if not serving)
-  else if (keys.Space && gameState.nearbyStation !== null) {
+  else if (spaceJustPressed && gameState.nearbyStation !== null) {
     const stationTypes = ["salmon", "shrimp", "mangoCake", "milk"] as const;
     const stationImages = [
       images.salmonPlate,
@@ -497,6 +510,9 @@ function update() {
     platePickupDropSound.currentTime = 0;
     platePickupDropSound.play().catch(() => {});
   }
+
+  // Reset spaceJustPressed at the end of the update cycle
+  spaceJustPressed = false;
 }
 
 // Cat management functions
