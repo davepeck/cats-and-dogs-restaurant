@@ -645,9 +645,16 @@ function findAvailableSeat(): { x: number; y: number } | null {
   return null; // No available seats
 }
 
+const doorbellSound = new Audio("/sounds/doorbell.wav");
+doorbellSound.volume = 0.7; // Adjust as needed
+
 function spawnCat(): void {
   const seat = findAvailableSeat();
   if (!seat) return; // No available seats
+
+  // Play doorbell sound when a new cat enters
+  doorbellSound.currentTime = 0;
+  doorbellSound.play().catch(() => {});
 
   // Calculate timer duration based on difficulty
   const baseTime = 12; // 12 seconds initially
