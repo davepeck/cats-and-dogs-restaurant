@@ -10,10 +10,11 @@ We:
 - Made our own music and sounds in Garage Band on an iPad. (The meows are from the garageband library.)
 - Used vscode + GitHub Copilot + Claude Sonnet 4 + super whisper
 
-We never hand-edited code. It's probably a mess. But we had to work really hard
-to think about how to describe the game in enough detail so that copilot could
-actually implement it.
+We never hand-edited code. It's a total mess!
 
-And that is &mdash; in this dad's opinion, at least &mdash; the important thing
+But: AI isn't magic. We had to work really hard to think about how to describe
+the game we wanted in enough detail so that copilot could actually implement it.
+_That_ is &mdash; in this dad's opinion, at least &mdash; the important thing
 to learn when first programming: not lines of code, but how to break down a
-problem into small pieces and how to explain them in exacting detail. :-)
+problem into small pieces that fit together coherently, and how to explain
+each piece in exacting detail. :-)
