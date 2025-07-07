@@ -532,6 +532,8 @@ function update() {
       // Correct order served!
       platePickupDropSound.currentTime = 0;
       platePickupDropSound.play().catch(() => {});
+      happyMeowSound.currentTime = 0;
+      happyMeowSound.play().catch(() => {});
       targetCat.state = "eating";
       targetCat.timeRemaining = 2; // 2 seconds eating time
       targetCat.plateOnTable = gameState.carriedItem.image; // Place plate on table
@@ -655,7 +657,10 @@ const platePickupDropSound = new Audio("/sounds/plate-pickup-or-drop.wav");
 platePickupDropSound.volume = 1.0; // Adjust as needed
 
 const impatientMeowSound = new Audio("/sounds/impatient-meow.wav");
-impatientMeowSound.volume = 0.75; // Adjust as needed
+impatientMeowSound.volume = 0.66; // Adjust as needed
+
+const happyMeowSound = new Audio("/sounds/happy-meow.wav");
+happyMeowSound.volume = 0.33; // Adjust as needed
 
 function spawnCat(): void {
   const seat = findAvailableSeat();
