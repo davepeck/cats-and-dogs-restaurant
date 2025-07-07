@@ -1,0 +1,37 @@
+[
+  {
+    "file": "/sounds/doorbell.wav",
+    "description": "Sound of a doorbell ringing when a cat enters the restaurant",
+    "loop": false
+  },
+  {
+    "file": "/sounds/gameover-music.mp3",
+    "description": "Game over music that plays when the game ends and gameover screen is showing",
+    "loop": false
+  },
+  {
+    "file": "/sounds/gameplay-music.mp3",
+    "description": "Background music that plays during normal gameplay",
+    "loop": true
+  },
+  {
+    "file": "/sounds/happy-meow.wav",
+    "description": "Sound of a cat meowing happily when served food",
+    "loop": false
+  },
+  {
+    "file": "/sounds/impatient-meow.wav",
+    "description": "Sound played when a cat is getting impatient waiting for food",
+    "loop": false
+  },
+  {
+    "file": "/sounds/plate-pickup-or-drop.wav",
+    "description": "Sound played when a plate is picked up or dropped",
+    "loop": false
+  },
+  {
+    "file": "/sounds/rejected.wav",
+    "description": "Sound played when user attempts to serve a plate that is not what the cat wants",
+    "loop": false
+  }
+]

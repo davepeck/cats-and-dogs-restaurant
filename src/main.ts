@@ -952,9 +952,9 @@ function render() {
         ctx.fillStyle = "rgba(128, 128, 128, 0.8)";
         ctx.fillRect(timerBarX, timerBarY, timerBarWidth, timerBarHeight);
 
-        // Timer foreground (white, shrinks as time runs out)
+        // Timer foreground (white, turns red when <= 25%, shrinks as time runs out)
         const timerProgress = cat.timeRemaining / cat.maxTime;
-        ctx.fillStyle = "white";
+        ctx.fillStyle = timerProgress <= 0.25 ? "red" : "white";
         ctx.fillRect(
           timerBarX,
           timerBarY,
