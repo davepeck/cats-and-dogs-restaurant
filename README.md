@@ -1,13 +1,13 @@
 # Catstaurant
 
-![Screenshot](./public/img/screenshot.png)
-
 Ellie and Daddy vibe coded this game in two ~1.5 hour long sessions.
+
+<img src="./public/img/screenshot.png" alt="Screenshot" width="50%" />
 
 We:
 
 - Had ChatGPT draw us graphics.
-- Made our own music in sounds in Garage Band on an iPad.
+- Made our own music and sounds in Garage Band on an iPad. (The meows are from the garageband library.)
 - Used vscode + GitHub Copilot + Claude Sonnet 4 + super whisper
 
 We never hand-edited code. It's probably a mess. But we had to work really hard
