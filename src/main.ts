@@ -361,6 +361,17 @@ function update() {
     return;
   }
 
+  // --- Cat spawn interval scaling ---
+  // Decrease interval smoothly with each cat served, reach 4s at 15 cats
+  const baseInterval = 8000; // 8 seconds
+  const minInterval = 4000; // 4 seconds
+  const maxServes = 15;
+  const progress = Math.min(gameState.catsServed, maxServes) / maxServes;
+  gameState.catSpawnInterval = Math.round(
+    baseInterval - (baseInterval - minInterval) * progress
+  );
+  // --- End scaling ---
+
   const moveSpeed = 3;
   const currentTime = Date.now();
 
@@ -679,8 +690,11 @@ function spawnCat(): void {
 
   // Calculate timer duration based on difficulty
   const baseTime = 12; // 12 seconds initially
-  const difficultyReduction = Math.floor(gameState.catsServed / 3); // 1 second reduction per 3 cats served
-  const timerDuration = Math.max(5, baseTime - difficultyReduction); // Minimum 5 seconds
+  // Reduce timer by 7% per cat served, minimum 5 seconds
+  const timerDuration = Math.max(
+    5,
+    Math.round(baseTime * Math.pow(0.93, gameState.catsServed))
+  );
 
   const randomOrder = getRandomOrder();
   const randomSprite = getRandomCatSprite();
